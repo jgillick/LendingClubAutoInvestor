@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import signal, sys, os
 import re
 import logging
@@ -620,12 +622,12 @@ class AutoInvestor:
     except Exception as e:
       self.logger.error(e)
 
-  def showSummary(self):
+  def showSummary(self, title='Summary'):
     """
     Show a summary of the settings that will be used for auto investing
     """
 
-    print '\n====== Summary ========='
+    print '\n========= {0} ========='.format(title)
     print 'Invest ALL available funds with the following criteria\n'
     print 'With at LEAST ${0} available to invest'.format(self.settings['minCash'])
     print 'Select a portfolio with an average interest rate between {0}% - {1}%'.format(self.settings['minPercent'], self.settings['maxPercent'])
@@ -633,10 +635,21 @@ class AutoInvestor:
     if self.settings['portfolio']:
       print 'Add investments to: "{0}"'.format(self.settings['portfolio'])
 
-    print '========================\n'
+    print '=========={0}==========\n'.format(''.center(len(title), '='))
 
 
   def getInvestmentSettings(self):
+    """
+    Show the user a series of prompts to determine how they want the tool to automatically invest.
+    This fills out the settings dictionary.
+    """
+
+    # Use the settings from last time
+    if self.settings['minPercent'] is not False and self.settings['maxPercent'] is not False:
+      self.showSummary('Prior Settings')
+      if self.prompt_yn('Would you like to use these settings from last time?', 'y'):
+        return True
+
 
      # Minimum cash
     print '---------'
@@ -689,6 +702,8 @@ class AutoInvestor:
       self.saveSettings()
     else:
       self.getInvestmentSettings()
+
+    return True;
 
 
   def getAuthSettings(self):
