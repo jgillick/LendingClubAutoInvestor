@@ -9,11 +9,11 @@ I have tested this tool to the best of my ability but understand that it may hav
 
 Why?
 --------------------
-I built this tool to solve the common annoyance when investing money in LendingClub and not all the loans get funded. It becomes a two steps forward, one step back process of reinvesting the available cash every few days until it's all invested. For large sums of money this process can take over a month to complete.
+I built this tool to solve the common annoyance when investing money in LendingClub and not all the loans get funded. It becomes a two steps forward, one step back process of reinvesting the cash every few days until it's all invested. For large sums of money this process can take over a month to complete.
 
 How it works
 --------------------
-This can be run as a background daemon that checks your account balances every 30 minutes. If the available cash meets or exceeds a [threshold you set](#minimum-cash), it's all automatically invested in a portfolio with an average interest rate within your [specified bounds](#minmax-percent-interest-rate).
+When running it checks your account balances every 30 minutes, if the available cash meets or exceeds a [threshold you set](#minimum-cash), it's all automatically invested in a portfolio with an average interest rate within your [specified boundaries](#minmax-percent-interest-rate).
 
 To put it simply, the tool does the same thing as if you were to:
  * Log into your account
