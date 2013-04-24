@@ -1,4 +1,4 @@
-Lending Club Auto Investor
+Lending Club Auto Investing Tool
 =======================
 
 A simple tool written in python that will watch your LendingClub account and automatically invest cash as it becomes available.
