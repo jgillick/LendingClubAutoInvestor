@@ -13,7 +13,7 @@ I built this tool to solve a common annoyance when investing money in LendingClu
 
 How it works
 --------------------
-This can be run as a background daemon that checks your account balances every 30 minutes. If the available cash meets or exceeds a [threshold you set](#minimum-cash), it's all automatically invested in a portfolio with an average return within your [specified bounds](#minmax-percent-interest-rate).
+This can be run as a background daemon that checks your account balances every 30 minutes. If the available cash meets or exceeds a [threshold you set](#minimum-cash), it's all automatically invested in a portfolio with an average interest rate within your [specified bounds](#minmax-percent-interest-rate).
 
 To put it simply, the tool does the same thing as if you were to:
  * Log into your account
