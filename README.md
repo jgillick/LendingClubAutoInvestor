@@ -1,7 +1,7 @@
 Lending Club Auto Investor
 =======================
 
-A daemon written in python that will automatically invest available cash in your LendingClub account.
+A simple tool written in python that will watch your LendingClub account and automatically invest cash as it becomes available.
 
 Disclaimer
 --------------------
