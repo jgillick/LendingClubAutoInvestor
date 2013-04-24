@@ -9,35 +9,31 @@ I have tested this tool to the best of my ability but understand that it may hav
 
 Why?
 --------------------
-The trouble I've had when investing money in LendingClub is that not all the loans get funded, so it becomes a back-and-forth dance of investing all available cash and reinvesting as some of it becomes available again. Two steps forward, one step back. This means that investing large sum of money can take quite awhile to get fully into the system.
+I built this tool to solve a common annoyance when investing money in LendingClub and not all the loans get funded. It becomes a two steps forward, one step back process of reinvesting the available cash every few days until it's all funded. For large sums of money this process can take over a month to complete.
 
 How it works
 --------------------
-This is a background daemon (or can be run in the foreground) that checks your account every 30 minutes. If the available cash meets or exceeds a threshold you set (see Minimum cash section), it's automatically invested in a portfolio with an average return within your specified bounds.
+This can be run as a background daemon that checks your account balances every 30 minutes. If the available cash meets or exceeds a threshold you set (see [Minimum cash](#minimum-cash) section), it's automatically invested in a portfolio with an average return within your [specified bounds](#minmax-percent-interest-rate).
 
 To put it simply, the tool does the same thing as if you were to:
  * Log into your account
  * Click Invest
  * Click More Options
- * Select an average return you want
+ * Select an average interest rate portfolio you want with the slider
  * Now click Continue and to through the following two pages to invest in that portfolio.
-
 
 Flexibility
 --------------------
-Through easy to use command prompts, you can set the minimum cash to invest and the min/max *average* interest portfolio you want to invest in. 
+Through easy-to-use command prompts, you can set the minimum cash to invest and the min/max *average* interest rate portfolio you want to invest in. 
 
 Current Limitations
 --------------------
-You **CANNOT** set filters or exclude specific loans or loan rate classes.
+You **CANNOT** set search filters or exclude specific loan notes or loan rates.
 
-Help
---------------------
-Please help me by forking and committing enhancements!
 
 Install
 --------------------
-As long as the requirements are met, you can run the script right from where it is on your system (see Running).
+As long as the requirements are met, you can run the script right from where it is on your system (see [Running](#running)).
 
 ### Requirements
 Currently there is no installer, so you have to install the following packages manually or with [pip](https://pypi.python.org/pypi/pip).
@@ -68,7 +64,7 @@ To stop the daemon run:
     python ./investor.py stop
 
 ### Usage
-To see the useage info
+To see the usage info
 
     python ./investor.py -h
 
@@ -93,8 +89,9 @@ This value relates to finding a investment portfolio using the slider on the Inv
 ### Named portfolio
 After the auto investor puts in an investment order, it can assign all the new notes to a specific portfolio. This option lets you choose from existing portfolios in your account or create a new one.
 
-### Review
+### Final Review
 After all the options are set, you will be given a review screen to verify those values. If you approve, type Y + Enter to start the program. It will now check your account every 30 minutes to see if there is enough available cash in your account to invest.
 
-
-
+Help out
+--------------------
+Please help me by forking and committing enhancements!
