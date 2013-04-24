@@ -9,7 +9,7 @@ I have tested this tool to the best of my ability but understand that it may hav
 
 Why?
 --------------------
-I built this tool to solve a common annoyance when investing money in LendingClub and not all the loans get funded. It becomes a two steps forward, one step back process of reinvesting the available cash every few days until it's all funded. For large sums of money this process can take over a month to complete.
+I built this tool to solve the common annoyance when investing money in LendingClub and not all the loans get funded. It becomes a two steps forward, one step back process of reinvesting the available cash every few days until it's all invested. For large sums of money this process can take over a month to complete.
 
 How it works
 --------------------
