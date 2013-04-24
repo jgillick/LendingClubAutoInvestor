@@ -56,7 +56,6 @@ class AutoInvestor:
         # Investment settings
         print 'Now that you\'re signed in, let\'s define what you want to do\n'
         self.getInvestmentSettings()
-        self.saveSettings()
 
         # All ready to start running
         print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
@@ -130,11 +129,12 @@ class AutoInvestor:
         del(settingsCopy['pass'])
 
       # Convert to JSON
-      jsonOut = json.dumps(self.settingsCopy)
+      jsonOut = json.dumps(settingsCopy)
 
       # Save
       self.logger.debug('Saving settings: {0}'.format(jsonOut))
       settingsFile = self.getSettingsFilePath()
+
       f = open(settingsFile, 'w')
       f.write(jsonOut)
       f.close()
@@ -142,7 +142,7 @@ class AutoInvestor:
       self.logger.debug('Saved')
 
     except Exception as e:
-      self.logger.debug('Could not save the settings to file: {0}'.format(str(e)))
+      self.logger.warn('Could not save the settings to file: {0}'.format(str(e)))
 
   def loadSavedSettings(self):
     """
@@ -172,20 +172,22 @@ class AutoInvestor:
     else:
       self.logger.debug('No saved settings file to load')
 
-  def post_url(self, relUrl, params={}, data={}):
+  def post_url(self, relUrl, params={}, data={}, useCookies=True):
     """
     Sends POST request to the relative URL of www.lendingclub.com
     """
     url = '{0}{1}'.format(self.baseUrl, relUrl)
     self.logger.debug('POSTING {0}'.format(url))
-    return requests.post(url, params=params, data=data, cookies=self.cookies, headers=self.requestHeaders)
+    cookies = self.cookies if useCookies else {}
+    return requests.post(url, params=params, data=data, cookies=cookies, headers=self.requestHeaders)
 
-  def get_url(self, relUrl, params={}):
+  def get_url(self, relUrl, params={}, useCookies=True):
     """
     Sends GET request to the relative URL of www.lendingclub.com
     """
     url = '{0}{1}'.format(self.baseUrl, relUrl)
     self.logger.debug('GETTING {0}'.format(url))
+    cookies = self.cookies if useCookies else {}
     return requests.get(url, params=params, cookies=self.cookies, headers=self.requestHeaders) 
 
   def isFloat(self, string):
@@ -392,7 +394,7 @@ class AutoInvestor:
       else:
         self.logger.info('Order #{0} was successfully submitted for ${1} at {2}%'.format(orderNum, cash, investmentOption['percentage']))
 
-      return self.assignToPorfolio(orderNum, loadID)
+      return self.assignToPortfolio(orderNum, loadID)
 
     except Exception as e:
       self.logger.error('Could not get your order number or loan ID from the order confirmation. {0}'.format(str(e)))
@@ -445,7 +447,7 @@ class AutoInvestor:
         self.logger.warn('Could not get cash balance: {0}'.format(response.text))
 
     except Exception as e:
-      self.logger.error('Could not get the cash balance on the account: {0}'.format(str(e)))
+      self.logger.error('Could not get the cash balance on the account: {0}\nJSON: {1}'.format(str(e), response.text))
 
     return cash
 
@@ -453,45 +455,58 @@ class AutoInvestor:
     """
     Invest cash every 30 minutes
     """
-    self.logger.info('Checking for funds to invest...')
-    try:
+    while(True):
+      self.logger.info('Checking for funds to invest...')
+      try:
 
-      # Get current cash balance
-      allCash = self.getCashBalance()
+        # Get current cash balance
+        allCash = self.getCashBalance()
 
-      # Find closest cash amount divisible by $25
-      cash = int(allCash)
-      while cash % 25 != 0:
-        cash -= 1        
+        if allCash > 0:
 
-      # Invest
-      self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
-      if cash >= self.settings['minCash']:
-        self.logger.info('Attempting to investing ${0}'.format(cash))
-        option = self.getInvestmentOption(cash)
+          # Find closest cash amount divisible by $25
+          cash = int(allCash)
+          while cash % 25 != 0:
+            cash -= 1        
 
-        # Submit investment
-        if option:
-          self.logger.info('Auto investing your available cash (${0}) at {1}%...'.format(cash, option['percentage']))
-          sleep(10) # last chance to cancel
+          # Invest
+          self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
+          if cash >= self.settings['minCash']:
+            self.logger.info('Attempting to investing ${0}'.format(cash))
+            option = self.getInvestmentOption(cash)
 
-          if self.sendInvestment(cash, option):
-            self.logger.info('Done\n')
+            # Submit investment
+            if option:
+              self.logger.info('Auto investing your available cash (${0}) at {1}%...'.format(cash, option['percentage']))
+              sleep(10) # last chance to cancel
+
+              if self.sendInvestment(cash, option):
+                self.logger.info('Done\n')
+              else:
+                self.logger.error('Errors occurred. Will try again in 30 minutes\n')
+
+            else:
+              self.logger.warn('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
           else:
-            self.logger.error('Errors occurred. Will try again in 30 minutes\n')
+            self.logger.info('Only ${0} available'.format(allCash))
 
+      except Exception as e:
+        self.logger.error(str(e))
+
+      # Reauthentication loop
+      while(True):
+
+        # Sleep for 30 minutes and then authenticate and move to the main loop
+        sleep(60 * 30)
+
+        # Authenticated, continue in the main loop
+        if self.authenticate():
+          self.logger.info('Authenticated')
+          break
+
+        # Try again in another 30 minutes
         else:
-          self.logger.warn('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
-      else:
-        self.logger.info('Only ${0} available'.format(allCash))
-
-    except Exception as e:
-      self.logger.error(str(e))
-
-    # Sleep for 30 minutes and then do it again
-    sleep(60 * 30)
-    self.authenticate()
-    self.investmentLoop()
+          self.logger.error('Could not authenticate')
 
 
   def authenticate(self):
@@ -504,7 +519,7 @@ class AutoInvestor:
       'login_email': self.settings['email'],
       'login_password': self.settings['pass']
     }
-    response = self.post_url('/account/login.action', data=payload)
+    response = self.post_url('/account/login.action', data=payload, useCookies=False)
 
     if (response.status_code == 200 or response.status_code == 302) and 'LC_FIRSTNAME' in response.cookies:
       self.authed = True
@@ -512,7 +527,7 @@ class AutoInvestor:
       return True
     return False
 
-  def portfolioPicker(self):
+  def portfolioPicker(self, previousFolio=False):
     """
     Load existing portfolios and let the user choose one or create a new one
     """
@@ -520,7 +535,6 @@ class AutoInvestor:
     print '\nPortfolios...'
 
     try:
-
       # Get portfolio page HTML
       response = self.get_url('/data/portfolioManagement?method=getLCPortfolios')
       json = response.json()
@@ -532,14 +546,25 @@ class AutoInvestor:
         i = 1
         otherIndex = 0
         cancelIndex = 0
+        previousIndex = 0
         for folio in folios:
           print '{0}: {1}'.format(i, folio['portfolioName'])
+
+          if previousFolio == folio['portfolioName']:
+            previousFolio = False
+
+          i += 1
+
+        if previousFolio is not False: 
+          previousIndex = i
+          print '{0}: {1}'.format(previousIndex, previousFolio)
           i += 1
 
         otherIndex = i
         print '{0}: Other'.format(otherIndex)
+        i += 1
 
-        cancelIndex = otherIndex + 1
+        cancelIndex = i
         print '{0}: Cancel'.format(cancelIndex)
 
         # Choose a portfolio
@@ -550,9 +575,17 @@ class AutoInvestor:
             continue
           choice = int(choice)
 
+          # No zero
+          if choice == 0:
+            continue
+
           # Existing portfolio chosen
-          if choice < otherIndex:
+          if choice <= len(folios):
             break;
+
+          # Previous
+          elif choice == previousIndex:
+            return previousFolio
 
           # Other
           elif choice == otherIndex:
@@ -619,7 +652,7 @@ class AutoInvestor:
     print '---------'
     while(True):
       print 'When auto investing, the LendingClub API will provide us a list of possible investment portfolios available at that moment.'
-      print 'To pick the appropriate one for you, we need to know what the minimum and maximum AVERAGE interest rate value you will accept.'
+      print 'To pick the appropriate one for you, it needs to know what the minimum and maximum AVERAGE interest rate value you will accept.'
       print 'The investment option closest to the maximum value will be chosen and all your available cash will be invested in it.\n'
 
       self.settings['minPercent'] = self.prompt_float('What\'s MININUM average interest rate portfolio that you will accept?', self.settings['minPercent'])
@@ -644,12 +677,17 @@ class AutoInvestor:
     folioOption = False 
     if self.settings['portfolio']: # if saved settings has a portfolio set, default the prompt to 'Y' to choose
       folioOption = 'y'
+
     if self.prompt_yn('Do you want to put your new investments into a named portfolio?', folioOption):
-      self.settings['portfolio'] = self.portfolioPicker()
+      self.settings['portfolio'] = self.portfolioPicker(self.settings['portfolio'])
+    else:
+      self.settings['portfolio'] = False
 
     # Review summary
     self.showSummary()
-    if not self.prompt_yn('Would you like to continue with these settings?', 'y'):
+    if self.prompt_yn('Would you like to continue with these settings?', 'y'):
+      self.saveSettings()
+    else:
       self.getInvestmentSettings()
 
 
