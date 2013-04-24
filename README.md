@@ -30,7 +30,6 @@ Current Limitations
 --------------------
 You **CANNOT** set search filters or exclude specific loan notes or loan rates.
 
-
 Install
 --------------------
 As long as the requirements are met, you can run the script right from where it is on your system (see [Running](#running)).
@@ -84,7 +83,7 @@ When the minimum available cash option is met, the auto investor will query the 
 
 This value relates to finding a investment portfolio using the slider on the Invest page of www.LendingClub.com. It's not possible, at any given time, to define an absolute interest rate value, so we need to know the range that you will accept.
 
-**Note** This does *NOT* filter out individual notes of a different interest rate.
+**Note** This does *NOT* filter out individual notes.
 
 ### Named portfolio
 After the auto investor puts in an investment order, it can assign all the new notes to a specific portfolio. This option lets you choose from existing portfolios in your account or create a new one.
