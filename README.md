@@ -28,7 +28,7 @@ Through easy-to-use command prompts, you can set the minimum cash to invest and 
 
 Current Limitations
 --------------------
-You **CANNOT** set search filters or exclude specific loan notes or loan rates.
+You **CANNOT** set search filters or exclude specific loan notes or loan grades.
 
 Install
 --------------------
