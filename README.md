@@ -110,3 +110,6 @@ Pretty much support most or all of the filters on the Invest page of LendingClub
 
 ### Detect existing daemon
 Currently if you try to start the tool as a daemon, and one is already running, it seems to start without error. Instead, we should check if one is currently running (maybe check the lock file?) and then display an error message to the user.
+
+### Unit testing 
+Pretty much what it says. I hate that the only way to test this end-to-end is to actually make an investment. A simple way to create this would be to use Python [unittest](http://docs.python.org/2/library/unittest.html) and create a simple nodejs server to emulate the LendingClub API endpoints.
