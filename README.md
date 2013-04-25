@@ -100,11 +100,11 @@ Feature Requests
 For people who would like to contribute, here are some features I'd like to add to the tool.
 
 ### Advanced options
-As part of the startup investing prompts, let the user choose to set advanced portfolio searching options. For example: 
+Let the user choose to set advanced portfolio searching options. For example: 
  * Specific loan grades (A-G)
  * Loan term (36 or 60 months)
  * Exclude loans already invested in
- * Etc
+ * etc.
 
 Pretty much support most or all of the filters on the Invest page of LendingClub.
 
