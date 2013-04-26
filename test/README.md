@@ -4,7 +4,7 @@ This directory contains all the unit tests for the LendingClub Auto Investor too
 
 Requirements
 --------------------
-To emulate the LendingClub API, the test suite will run a simple [nodejs](http://nodejs.org/) server. Be sure you have that [installed](http://nodejs.org/) before running any of the tests, or they will fail.
+To emulate the LendingClub API, the test suite will run a simple [nodejs](http://nodejs.org/) server. Be sure you have nodejs [installed](http://nodejs.org/) on your system before running any of the tests, or they will fail.
 
 The nodejs server will be running on port 7357. You can change this in `node/server.js`.
 
