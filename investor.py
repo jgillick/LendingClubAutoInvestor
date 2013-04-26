@@ -41,7 +41,7 @@ class AutoInvestor:
 
     def __init__(self, verbose=False, daemon=False, stopping=False):
         self.verbose = verbose
-        self.createLogger()
+        self.create_logger()
 
         # Daemon settings
         if daemon:
@@ -71,16 +71,16 @@ class AutoInvestor:
             print 'VERBOSE OUTPUT IS ON\n'
 
         # Load saved settings
-        self.loadSavedSettings()
+        self.load_saved_settings()
 
         # Auth settings
-        self.getAuthSettings()
+        self.get_auth_settings()
 
         if self.authed:
 
             # Investment settings
             print 'Now that you\'re signed in, let\'s define what you want to do\n'
-            self.getInvestmentSettings()
+            self.get_investment_settings()
 
             # All ready to start running
             print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
@@ -89,9 +89,9 @@ class AutoInvestor:
         """
         Start the investment loop
         """
-        self.investmentLoop()
+        self.investment_loop()
 
-    def createLogger(self):
+    def create_logger(self):
         """
         Initialize the logger
         """
@@ -110,7 +110,7 @@ class AutoInvestor:
 
         self.logger.addHandler(logHandler)
 
-    def currencyToNumber(self, cashValue):
+    def currency_to_float(self, cashValue):
         """
         Converts a currency value, with or without symbols, to a floating point number,
         Returns -1.0, if the string is not a number or currency value
@@ -128,7 +128,7 @@ class AutoInvestor:
 
         return cash
 
-    def isFloat(self, string):
+    def isfloat(self, string):
         """
         Returns true if the string can be cast to a float
         """
@@ -138,13 +138,13 @@ class AutoInvestor:
         except ValueError:
             return False
 
-    def getSettingsFilePath(self):
+    def get_settings_filepath(self):
         """
         Return the file path to the settings file
         """
         return os.path.join(self.baseDir, '.investor')
 
-    def saveSettings(self):
+    def save_settings(self):
         """
         Save the settings dict to a file
         """
@@ -159,7 +159,7 @@ class AutoInvestor:
 
             # Save
             self.logger.debug('Saving settings: {0}'.format(jsonOut))
-            settingsFile = self.getSettingsFilePath()
+            settingsFile = self.get_settings_filepath()
 
             f = open(settingsFile, 'w')
             f.write(jsonOut)
@@ -170,11 +170,11 @@ class AutoInvestor:
         except Exception as e:
             self.logger.warning('Could not save the settings to file: {0}'.format(str(e)))
 
-    def loadSavedSettings(self):
+    def load_saved_settings(self):
         """
         Returned the saved settings used last time this program was run
         """
-        settingsFile = self.getSettingsFilePath()
+        settingsFile = self.get_settings_filepath()
         if os.path.exists(settingsFile):
             self.logger.debug('Loading saved settings file')
             try:
@@ -254,7 +254,7 @@ class AutoInvestor:
 
             if type(response) == float:
                 return response
-            if not self.isFloat(response):
+            if not self.isfloat(response):
                 print 'The value you entered must be a whole number, without symbols or decimal points'
             else:
                 return float(response)
@@ -303,7 +303,7 @@ class AutoInvestor:
             elif response in ['n', 'no']:
                 return False
 
-    def getInvestmentOption(self, cash):
+    def get_investment_option(self, cash):
         """
         When investing, lending club provides a list of investment portfolio options, all with different
         diversification of loan classes which come out to an average percent return.
@@ -359,7 +359,7 @@ class AutoInvestor:
 
         return False
 
-    def getStructToken(self):
+    def get_strut_token(self):
         """
         Get the struts token from the place order page
         """
@@ -375,15 +375,15 @@ class AutoInvestor:
 
         return strutToken
 
-    def prepareInvestmentOrder(self, cash, investmentOption):
+    def prepare_investment_order(self, cash, investmentOption):
         """
-        Submit an investment request for with an investment portfolio option selected from getInvestmentOption()
+        Submit an investment request for with an investment portfolio option selected from get_investment_option()
         """
 
         # Place the order
         try:
             if 'optIndex' not in investmentOption:
-                self.logger.error('The \'optIndex\' key is not present in investmentOption passed to sendInvestment()! This value is set when selecting the option from getInvestmentOption()')
+                self.logger.error('The \'optIndex\' key is not present in investmentOption passed to sendInvestment()! This value is set when selecting the option from get_investment_option()')
                 return False
 
             # Prepare the order (don't process response)
@@ -395,18 +395,18 @@ class AutoInvestor:
             self.get_url('/portfolio/recommendPortfolio.action', params=payload)
 
             # Get struts token
-            return self.getStructToken()
+            return self.get_strut_token()
 
         except Exception as e:
             self.logger.error('Could not complete your order (although, it might have gone through): {0}'.format(str(e)))
 
         return False
 
-    def placeOrder(self, strutToken, cash, investmentOption):
+    def place_order(self, strutToken, cash, investmentOption):
         """
         Place the order and get the order number, loan ID from the resulting HTML -- then assign to a portfolio
         The cash parameter is the amount of money invest in this order
-        The investmentOption parameter is the investment portfolio returned by getInvestmentOption()
+        The investmentOption parameter is the investment portfolio returned by get_investment_option()
         """
 
         orderID = 0
@@ -445,7 +445,7 @@ class AutoInvestor:
 
         return (orderID, loanID)
 
-    def assignToPortfolio(self, orderID=0, loanID=0):
+    def assign_to_portfolio(self, orderID=0, loanID=0):
         """
         Assign an order to a the portfolio named in the settings dictionary.
         """
@@ -478,7 +478,7 @@ class AutoInvestor:
 
         return False
 
-    def getCashBalance(self):
+    def get_cash_balance(self):
         """
         Returns the cash balance available to invest
         """
@@ -489,7 +489,7 @@ class AutoInvestor:
 
             if json['result'] == 'success':
                 self.logger.debug('Cash available: {0}'.format(json['cashBalance']))
-                cash = self.currencyToNumber(json['cashBalance'])
+                cash = self.currency_to_float(json['cashBalance'])
             else:
                 self.logger.error('Could not get cash balance: {0}'.format(response.text))
 
@@ -498,7 +498,7 @@ class AutoInvestor:
 
         return cash
 
-    def attemptToInvest(self):
+    def attempt_to_invest(self):
         """
         Attempt an investment if there is enough available cash and matching investment option
         Returns true if money was invested
@@ -515,7 +515,7 @@ class AutoInvestor:
         self.logger.info('Checking for funds to invest...')
         try:
             # Get current cash balance
-            allCash = self.getCashBalance()
+            allCash = self.get_cash_balance()
             if allCash > 0:
 
                 # Find closest cash amount divisible by $25
@@ -527,7 +527,7 @@ class AutoInvestor:
                 self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
                 if cash >= self.settings['minCash']:
                     self.logger.info('Attempting to investing ${0}'.format(cash))
-                    option = self.getInvestmentOption(cash)
+                    option = self.get_investment_option(cash)
 
                     # Submit investment
                     if option:
@@ -535,11 +535,11 @@ class AutoInvestor:
                         sleep(5)  # last chance to cancel
 
                         # Prepare the investment and place the order
-                        strutToken = self.prepareInvestmentOrder(cash, option)
+                        strutToken = self.prepare_investment_order(cash, option)
                         if strutToken:
-                            (orderID, loanID) = self.placeOrder(strutToken, cash, option)
+                            (orderID, loanID) = self.place_order(strutToken, cash, option)
                             if orderID > 0 and loanID > 0:
-                                self.assignToPortfolio(orderID, loanID)
+                                self.assign_to_portfolio(orderID, loanID)
                                 self.logger.info('Done\n')
                                 return True
 
@@ -558,12 +558,12 @@ class AutoInvestor:
 
         return False
 
-    def investmentLoop(self):
+    def investment_loop(self):
         """
         Invest cash every 30 minutes
         """
         while(True):
-            self.attemptToInvest()
+            self.attempt_to_invest()
 
             # Sleep for 30 minutes and then authenticate and move to the main loop
             sleep(self.loopDelay)
@@ -588,7 +588,7 @@ class AutoInvestor:
         self.logger.error('Authentication returned {0}. Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
         return False
 
-    def getPortfolioList(self):
+    def get_portfolio_list(self):
         """
         Return the list of portfolios from the server
         """
@@ -605,7 +605,7 @@ class AutoInvestor:
 
         return folios
 
-    def portfolioPicker(self, previousFolio=False):
+    def portfolio_picker(self, previousFolio=False):
         """
         Load existing portfolios and let the user choose one or create a new one
         """
@@ -613,7 +613,7 @@ class AutoInvestor:
         print '\nPortfolios...'
 
         try:
-            folios = self.getPortfolioList()
+            folios = self.get_portfolio_list()
 
             # Print out the portfolio list
             i = 1
@@ -688,7 +688,7 @@ class AutoInvestor:
         except Exception as e:
             self.logger.error(e)
 
-    def showSummary(self, title='Summary'):
+    def show_summary(self, title='Summary'):
         """
         Show a summary of the settings that will be used for auto investing
         """
@@ -703,7 +703,7 @@ class AutoInvestor:
 
         print '=========={0}==========\n'.format(''.center(len(title), '='))
 
-    def getInvestmentSettings(self):
+    def get_investment_settings(self):
         """
         Show the user a series of prompts to determine how they want the tool to automatically invest.
         This fills out the settings dictionary.
@@ -711,7 +711,7 @@ class AutoInvestor:
 
         # Use the settings from last time
         if self.settings['minPercent'] is not False and self.settings['maxPercent'] is not False:
-            self.showSummary('Prior Settings')
+            self.show_summary('Prior Settings')
             if self.prompt_yn('Would you like to use these settings from last time?', 'y'):
                 return True
 
@@ -756,20 +756,20 @@ class AutoInvestor:
             folioOption = 'y'
 
         if self.prompt_yn('Do you want to put your new investments into a named portfolio?', folioOption):
-            self.settings['portfolio'] = self.portfolioPicker(self.settings['portfolio'])
+            self.settings['portfolio'] = self.portfolio_picker(self.settings['portfolio'])
         else:
             self.settings['portfolio'] = False
 
         # Review summary
-        self.showSummary()
+        self.show_summary()
         if self.prompt_yn('Would you like to continue with these settings?', 'y'):
-            self.saveSettings()
+            self.save_settings()
         else:
-            self.getInvestmentSettings()
+            self.get_investment_settings()
 
         return True
 
-    def getAuthSettings(self):
+    def get_auth_settings(self):
         """
         Get the initial settings for the funder
         """
@@ -787,18 +787,18 @@ class AutoInvestor:
                 print "\nCould not authenticate, please try again"
 
         print 'Success!\n'
-        print 'You have ${0} in your account, free to invest\n'.format(self.getCashBalance())
+        print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
         return True
 
 
 if __name__ == '__main__':
-    def interuptHandler(signum, frame):
+    def interupt_handler(signum, frame):
         """
         Exit gracefully
         """
         print '\n\nStopping program...\n'
         exit()
-    signal.signal(signal.SIGINT, interuptHandler)
+    signal.signal(signal.SIGINT, interupt_handler)
 
     # Process command flags
     isVerbose = ('-v' in sys.argv)

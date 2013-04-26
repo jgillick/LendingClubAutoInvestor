@@ -10,7 +10,7 @@ from investor import *
 
 
 class TestInvestorUtils(unittest.TestCase):
-    """ Tests the utility functions, like prompt and isFloat """
+    """ Tests the utility functions, like prompt and isfloat """
 
     count = 0
     investor = False
@@ -118,22 +118,22 @@ class TestInvestorUtils(unittest.TestCase):
         self.assertEqual(self.investor.prompt_int('msg', 15), 15)
 
     def test_is_float(self):
-        self.assertTrue(self.investor.isFloat('10'))
-        self.assertTrue(self.investor.isFloat('11.5'))
-        self.assertTrue(self.investor.isFloat('-13'))
-        self.assertTrue(self.investor.isFloat(14.5))
+        self.assertTrue(self.investor.isfloat('10'))
+        self.assertTrue(self.investor.isfloat('11.5'))
+        self.assertTrue(self.investor.isfloat('-13'))
+        self.assertTrue(self.investor.isfloat(14.5))
 
-        self.assertFalse(self.investor.isFloat('NotANumber'))
-        self.assertFalse(self.investor.isFloat('PartNumber123'))
+        self.assertFalse(self.investor.isfloat('NotANumber'))
+        self.assertFalse(self.investor.isfloat('PartNumber123'))
 
     def test_currency_to_number(self):
-        self.assertStrictEqual(self.investor.currencyToNumber('123.45'), 123.45)
-        self.assertStrictEqual(self.investor.currencyToNumber('$123.45'), 123.45)
-        self.assertStrictEqual(self.investor.currencyToNumber('123.45$'), 123.45)
-        self.assertStrictEqual(self.investor.currencyToNumber('123.45$USD'), 123.45)
-        self.assertStrictEqual(self.investor.currencyToNumber('1,230.45'), 1230.45)
-        self.assertStrictEqual(self.investor.currencyToNumber('123'), 123.0)
-        self.assertStrictEqual(self.investor.currencyToNumber('$123'), 123.0)
+        self.assertStrictEqual(self.investor.currency_to_float('123.45'), 123.45)
+        self.assertStrictEqual(self.investor.currency_to_float('$123.45'), 123.45)
+        self.assertStrictEqual(self.investor.currency_to_float('123.45$'), 123.45)
+        self.assertStrictEqual(self.investor.currency_to_float('123.45$USD'), 123.45)
+        self.assertStrictEqual(self.investor.currency_to_float('1,230.45'), 1230.45)
+        self.assertStrictEqual(self.investor.currency_to_float('123'), 123.0)
+        self.assertStrictEqual(self.investor.currency_to_float('$123'), 123.0)
 
 
 class TestInvestorFlow(unittest.TestCase):
@@ -150,7 +150,7 @@ class TestInvestorFlow(unittest.TestCase):
         # Create investor object
         self.investor = AutoInvestor()
         self.investor.baseUrl = 'http://localhost:7357'
-        self.investor.getSettingsFilePath = lambda: os.path.join(os.path.dirname(os.path.realpath(__file__)), '.investortest')
+        self.investor.get_settings_filepath = lambda: os.path.join(os.path.dirname(os.path.realpath(__file__)), '.investortest')
         self.investor.settings = {
             'email': 'test@test.com',
             'pass': 'testpassword',
@@ -167,7 +167,7 @@ class TestInvestorFlow(unittest.TestCase):
             self.server.kill()
 
         # Delete settings file
-        settingsFile = self.investor.getSettingsFilePath()
+        settingsFile = self.investor.get_settings_filepath()
         if os.path.exists(settingsFile):
             os.remove(settingsFile)
 
@@ -179,37 +179,37 @@ class TestInvestorFlow(unittest.TestCase):
         self.assertFalse(self.investor.authenticate())
 
     def test_get_cash_balance(self):
-        self.assertEqual(self.investor.getCashBalance(), 216.02)
+        self.assertEqual(self.investor.get_cash_balance(), 216.02)
 
     def test_portfolios(self):
-        portfolios = self.investor.getPortfolioList()
+        portfolios = self.investor.get_portfolio_list()
         self.assertNotEquals(len(portfolios), 0)
 
     def test_investment_option(self):
         """ Match settings to investment options -- closest match should be 18.66 """
-        match = self.investor.getInvestmentOption(200)
+        match = self.investor.get_investment_option(200)
         self.assertEqual(match['percentage'], 18.66)
 
     def test_investment_option_minimums(self):
         """ Test min percent: no investment options between 18.7 - 19.0 """
         self.investor.settings['minPercent'] = 18.7
-        match = self.investor.getInvestmentOption(200)
+        match = self.investor.get_investment_option(200)
         self.assertFalse(match)
 
     def test_prepare_order(self):
-        investmentOption = self.investor.getInvestmentOption(200)
-        strutToken = self.investor.prepareInvestmentOrder(200, investmentOption)
+        investmentOption = self.investor.get_investment_option(200)
+        strutToken = self.investor.prepare_investment_order(200, investmentOption)
         self.assertEqual(strutToken, 'abc123')
 
     def test_place_order(self):
-        investmentOption = self.investor.getInvestmentOption(200)
-        (orderID, loanID) = self.investor.placeOrder('abc123', 200, investmentOption)
+        investmentOption = self.investor.get_investment_option(200)
+        (orderID, loanID) = self.investor.place_order('abc123', 200, investmentOption)
         self.assertEqual(orderID, 123)
         self.assertEqual(loanID, 345)
 
     def test_assign_to_porfolio(self):
         """ Standard assign to portfolio with order and loan IDs """
-        ret = self.investor.assignToPortfolio(123, 456)
+        ret = self.investor.assign_to_portfolio(123, 456)
         self.assertTrue(ret)
 
         # Should have info, no errors or warnings
@@ -219,18 +219,18 @@ class TestInvestorFlow(unittest.TestCase):
 
     def test_assign_to_porfolio_no_order(self):
         """ Assigning to portfolio without an order ID """
-        ret = self.investor.assignToPortfolio(0, 456)
+        ret = self.investor.assign_to_portfolio(0, 456)
         self.assertFalse(ret)
 
     def test_assign_to_porfolio_no_loan(self):
         """ Assigning to portfolio without a loan ID """
-        ret = self.investor.assignToPortfolio(123, 0)
+        ret = self.investor.assign_to_portfolio(123, 0)
         self.assertFalse(ret)
 
     def test_assign_to_porfolio_no_portfolio(self):
         """ If not assigning to portfolio, it should still return true """
         self.investor.settings['portfolio'] = False
-        ret = self.investor.assignToPortfolio(123, 456)
+        ret = self.investor.assign_to_portfolio(123, 456)
         self.assertTrue(ret)
 
         # Should be no errors or info
@@ -240,7 +240,7 @@ class TestInvestorFlow(unittest.TestCase):
 
     def test_attempt_to_invest(self):
         """ Test end-to-end investment """
-        ret = self.investor.attemptToInvest()
+        ret = self.investor.attempt_to_invest()
         self.assertTrue(ret)
 
         # Shouldn't be any errors or warnings
@@ -250,7 +250,7 @@ class TestInvestorFlow(unittest.TestCase):
     def test_attempt_to_invest_no_folio(self):
         """ Test end-to-end investment without portfolio """
         self.investor.settings['portfolio'] = False
-        ret = self.investor.attemptToInvest()
+        ret = self.investor.attempt_to_invest()
         self.assertTrue(ret)
 
         # Shouldn't be any errors or warnings
@@ -260,7 +260,7 @@ class TestInvestorFlow(unittest.TestCase):
     def test_attempt_to_invest_not_enough_cash(self):
         """ Test end-to-end investment without portfolio """
         self.investor.settings['minCash'] = 1000
-        ret = self.investor.attemptToInvest()
+        ret = self.investor.attempt_to_invest()
         self.assertFalse(ret)
 
         # Shouldn't be any errors or warnings
@@ -271,7 +271,7 @@ class TestInvestorFlow(unittest.TestCase):
         """ Test end-to-end investment without investment option match """
         # No options between 18.7 - 19.0
         self.investor.settings['minPercent'] = 18.7
-        ret = self.investor.attemptToInvest()
+        ret = self.investor.attempt_to_invest()
         self.assertFalse(ret)
 
         # Should be 0 errors and 1 warning
