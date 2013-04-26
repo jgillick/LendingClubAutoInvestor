@@ -21,6 +21,7 @@ class AutoInvestor:
     authed = False
     cookies = {}
     verbose = False
+    loopDelay = 60 * 30  # 30 minutes in between loops
     logFile = os.path.join(baseDir, 'daemon.log')
 
     requestHeaders = {
@@ -42,29 +43,6 @@ class AutoInvestor:
         self.verbose = verbose
         self.createLogger()
 
-        if not stopping:
-            print "\n///------------------------- $$$ -------------------------\\\\\\"
-            print '|     Welcome to the unofficial Lending Club investment tool     |'
-            print " ------------------------------------------------------------ \n"
-
-            if self.verbose:
-                print 'VERBOSE OUTPUT IS ON\n'
-
-            # Load saved settings
-            self.loadSavedSettings()
-
-            # Auth settings
-            self.getAuthSettings()
-
-            if self.authed:
-
-                # Investment settings
-                print 'Now that you\'re signed in, let\'s define what you want to do\n'
-                self.getInvestmentSettings()
-
-                # All ready to start running
-                print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
-
         # Daemon settings
         if daemon:
             self.stdin_path = '/dev/null'
@@ -79,6 +57,33 @@ class AutoInvestor:
                 print 'Logging output to {0}'.format(self.logFile)
             else:
                 print 'Stoping auto investor daemon...'
+
+    def setup(self):
+        """
+        Setup the investor to run
+        """
+
+        print "\n///------------------------- $$$ -------------------------\\\\\\"
+        print '|     Welcome to the unofficial Lending Club investment tool     |'
+        print " ------------------------------------------------------------ \n"
+
+        if self.verbose:
+            print 'VERBOSE OUTPUT IS ON\n'
+
+        # Load saved settings
+        self.loadSavedSettings()
+
+        # Auth settings
+        self.getAuthSettings()
+
+        if self.authed:
+
+            # Investment settings
+            print 'Now that you\'re signed in, let\'s define what you want to do\n'
+            self.getInvestmentSettings()
+
+            # All ready to start running
+            print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
 
     def run(self):
         """
@@ -123,6 +128,16 @@ class AutoInvestor:
 
         return cash
 
+    def isFloat(self, string):
+        """
+        Returns true if the string can be cast to a float
+        """
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
     def getSettingsFilePath(self):
         """
         Return the file path to the settings file
@@ -153,7 +168,7 @@ class AutoInvestor:
             self.logger.debug('Saved')
 
         except Exception as e:
-            self.logger.warn('Could not save the settings to file: {0}'.format(str(e)))
+            self.logger.warning('Could not save the settings to file: {0}'.format(str(e)))
 
     def loadSavedSettings(self):
         """
@@ -201,24 +216,28 @@ class AutoInvestor:
         cookies = self.cookies if useCookies else {}
         return requests.get(url, params=params, cookies=cookies, headers=self.requestHeaders)
 
-    def isFloat(self, string):
+    def get_password(self):
         """
-        Returns true if the string can be cast to a float
+        Wrapper for getpass.getpas that can be overridden for unit testing
         """
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
+        return getpass.getpass()
+
+    def get_input(self, msg):
+        """
+        Wrapper for raw_input that can be overridden for unit testing
+        """
+        return raw_input(msg)
 
     def prompt(self, msg, prefill=False):
-        """ Prompt the user for input and return the prefill value if the user did not enter anything """
+        """
+        Prompt the user for input and return the prefill value if the user does not enter anything
+        """
         if prefill is not False:
             msg = "{0} [{1}]: ".format(msg, str(prefill))
         else:
             msg = "{0}: ".format(msg)
 
-        response = raw_input(msg)
+        response = self.get_input(msg)
         if response.strip() == '' and prefill is not False:
             return prefill
         else:
@@ -228,6 +247,11 @@ class AutoInvestor:
         """ Prompts the user for an decimal response """
         while(True):
             response = self.prompt(msg, prefill)
+
+            # Remove commas
+            if type(response) == str:
+                response = response.replace(',', '')
+
             if type(response) == float:
                 return response
             if not self.isFloat(response):
@@ -266,7 +290,7 @@ class AutoInvestor:
             msg = "{0} [y/n]: ".format(msg)
 
         while(True):
-            response = raw_input(msg)
+            response = self.get_input(msg)
 
             # Normalize response
             response = response.lower().strip()
@@ -289,7 +313,6 @@ class AutoInvestor:
         the one closest to max will be chosen.
         """
         try:
-
             maxPercent = self.settings['maxPercent']
             minPercent = self.settings['minPercent']
 
@@ -336,7 +359,23 @@ class AutoInvestor:
 
         return False
 
-    def sendInvestment(self, cash, investmentOption):
+    def getStructToken(self):
+        """
+        Get the struts token from the place order page
+        """
+        strutToken = ''
+        try:
+            response = self.get_url('/portfolio/placeOrder.action')
+            soup = BeautifulSoup(response.text, "html5lib")
+            strutTokenTag = soup.find('input', {'name': 'struts.token'})
+            if strutTokenTag:
+                strutToken = strutTokenTag['value']
+        except Exception as e:
+            self.logger.warning('Could not get struts token. Error message: {0}'.filter(str(e)))
+
+        return strutToken
+
+    def prepareInvestmentOrder(self, cash, investmentOption):
         """
         Submit an investment request for with an investment portfolio option selected from getInvestmentOption()
         """
@@ -356,43 +395,39 @@ class AutoInvestor:
             self.get_url('/portfolio/recommendPortfolio.action', params=payload)
 
             # Get struts token
-            response = self.get_url('/portfolio/placeOrder.action')
-            soup = BeautifulSoup(response.text, "html5lib")
-            strutToken = soup.find('input', {'name': 'struts.token'})
-
-            # Place order
-            payload = {}
-            if strutToken:
-                payload['struts.token.name'] = 'struts.token'
-                payload['struts.token'] = strutToken['value']
-            response = self.post_url('/portfolio/orderConfirmed.action', data=payload)
-
-            self.processConfirmation(response.text, cash, investmentOption)
+            return self.getStructToken()
 
         except Exception as e:
             self.logger.error('Could not complete your order (although, it might have gone through): {0}'.format(str(e)))
-            return False
 
-        return True
+        return False
 
-    def processConfirmation(self, html, cash, investmentOption):
+    def placeOrder(self, strutToken, cash, investmentOption):
         """
-        Given the confirmation page HTML, process the order number, loan ID and assign to portfolio
+        Place the order and get the order number, loan ID from the resulting HTML -- then assign to a portfolio
         The cash parameter is the amount of money invest in this order
         The investmentOption parameter is the investment portfolio returned by getInvestmentOption()
         """
 
-        orderNum = 0
+        orderID = 0
         loanID = 0
 
         # Process order confirmation page
         try:
+            payload = {}
+            if strutToken:
+                payload['struts.token.name'] = 'struts.token'
+                payload['struts.token'] = strutToken
+            response = self.post_url('/portfolio/orderConfirmed.action', data=payload)
+
+            # Process HTML
+            html = response.text
             soup = BeautifulSoup(html)
 
             # Order num
             orderField = soup.find(id='order_id')
             if orderField:
-                orderNum = int(orderField['value'])
+                orderID = int(orderField['value'])
 
             # Load ID
             loanField = soup.find('td', {'class': 'loan_id'})
@@ -400,19 +435,17 @@ class AutoInvestor:
                 loanID = int(loanField.text)
 
             # Print status message
-            if orderNum == 0:
+            if orderID == 0:
                 self.logger.error('An investment order was submitted, but a confirmation could not be determined')
-                return False
             else:
-                self.logger.info('Order #{0} was successfully submitted for ${1} at {2}%'.format(orderNum, cash, investmentOption['percentage']))
-
-            return self.assignToPortfolio(orderNum, loanID)
+                self.logger.info('Order #{0} was successfully submitted for ${1} at {2}%'.format(orderID, cash, investmentOption['percentage']))
 
         except Exception as e:
             self.logger.error('Could not get your order number or loan ID from the order confirmation. Err Message: {0}'.format(str(e)))
-            return False
 
-    def assignToPortfolio(self, orderNum=0, loanID=0):
+        return (orderID, loanID)
+
+    def assignToPortfolio(self, orderID=0, loanID=0):
         """
         Assign an order to a the portfolio named in the settings dictionary.
         """
@@ -422,11 +455,11 @@ class AutoInvestor:
             if not self.settings['portfolio']:
                 return True
 
-            if loanID != 0 and orderNum != 0:
+            if loanID != 0 and orderID != 0:
                 postData = {
                     'loan_id': str(loanID),
                     'record_id': str(loanID),
-                    'order_id': str(orderNum)
+                    'order_id': str(orderID)
                 }
                 paramData = {
                     'method': 'addToLCPortfolio',
@@ -435,13 +468,15 @@ class AutoInvestor:
                 response = self.post_url('/data/portfolioManagement', params=paramData, data=postData)
 
                 if response.status_code != 200 or response.json()['result'] != 'success':
-                    self.logger.error('Could not assign order #{0} to portfolio \'{1}: Server responded with {2}\''.format(str(orderNum), self.settings['portfolio'], response.text))
+                    self.logger.error('Could not assign order #{0} to portfolio \'{1}: Server responded with {2}\''.format(str(orderID), self.settings['portfolio'], response.text))
                 else:
-                    self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderNum), self.settings['portfolio']))
+                    self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.settings['portfolio']))
                     return True
 
         except Exception as e:
-            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2}'.format(orderNum, self.settings['portfolio'], str(e)))
+            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2}'.format(orderID, self.settings['portfolio'], str(e)))
+
+        return False
 
     def getCashBalance(self):
         """
@@ -463,62 +498,75 @@ class AutoInvestor:
 
         return cash
 
+    def attemptToInvest(self):
+        """
+        Attempt an investment if there is enough available cash and matching investment option
+        Returns true if money was invested
+        """
+
+        # Authenticate
+        if self.authenticate():
+            self.logger.info('Authenticated')
+        else:
+            self.logger.error('Could not authenticate')
+            return False
+
+        # Try to invest
+        self.logger.info('Checking for funds to invest...')
+        try:
+            # Get current cash balance
+            allCash = self.getCashBalance()
+            if allCash > 0:
+
+                # Find closest cash amount divisible by $25
+                cash = int(allCash)
+                while cash % 25 != 0:
+                    cash -= 1
+
+                # Invest
+                self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
+                if cash >= self.settings['minCash']:
+                    self.logger.info('Attempting to investing ${0}'.format(cash))
+                    option = self.getInvestmentOption(cash)
+
+                    # Submit investment
+                    if option:
+                        self.logger.info('Auto investing your available cash (${0}) at {1}%...'.format(cash, option['percentage']))
+                        sleep(5)  # last chance to cancel
+
+                        # Prepare the investment and place the order
+                        strutToken = self.prepareInvestmentOrder(cash, option)
+                        if strutToken:
+                            (orderID, loanID) = self.placeOrder(strutToken, cash, option)
+                            if orderID > 0 and loanID > 0:
+                                self.assignToPortfolio(orderID, loanID)
+                                self.logger.info('Done\n')
+                                return True
+
+                        # If we haven't returned by now, there must have been an error
+                        self.logger.error('Errors occurred. Will try again in 30 minutes\n')
+                        return False
+
+                    else:
+                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
+                else:
+                    self.logger.info('Only ${0} available'.format(allCash))
+                    return False
+
+        except Exception as e:
+            self.logger.error(str(e))
+
+        return False
+
     def investmentLoop(self):
         """
         Invest cash every 30 minutes
         """
         while(True):
-            self.logger.info('Checking for funds to invest...')
-            try:
+            self.attemptToInvest()
 
-                # Get current cash balance
-                allCash = self.getCashBalance()
-
-                if allCash > 0:
-
-                    # Find closest cash amount divisible by $25
-                    cash = int(allCash)
-                    while cash % 25 != 0:
-                        cash -= 1
-
-                    # Invest
-                    self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
-                    if cash >= self.settings['minCash']:
-                        self.logger.info('Attempting to investing ${0}'.format(cash))
-                        option = self.getInvestmentOption(cash)
-
-                        # Submit investment
-                        if option:
-                            self.logger.info('Auto investing your available cash (${0}) at {1}%...'.format(cash, option['percentage']))
-                            sleep(10)  # last chance to cancel
-
-                            if self.sendInvestment(cash, option):
-                                self.logger.info('Done\n')
-                            else:
-                                self.logger.error('Errors occurred. Will try again in 30 minutes\n')
-
-                        else:
-                            self.logger.warn('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
-                    else:
-                        self.logger.info('Only ${0} available'.format(allCash))
-
-            except Exception as e:
-                self.logger.error(str(e))
-
-            # Reauthentication loop
-            while(True):
-
-                # Sleep for 30 minutes and then authenticate and move to the main loop
-                sleep(60 * 30)
-
-                # Authenticated, continue in the main loop
-                if self.authenticate():
-                    self.logger.info('Authenticated')
-                    break
-
-                # Try again in another 30 minutes
-                else:
-                    self.logger.error('Could not authenticate')
+            # Sleep for 30 minutes and then authenticate and move to the main loop
+            sleep(self.loopDelay)
 
     def authenticate(self):
         """
@@ -536,7 +584,26 @@ class AutoInvestor:
             self.authed = True
             self.cookies = response.cookies
             return True
+
+        self.logger.error('Authentication returned {0}. Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
         return False
+
+    def getPortfolioList(self):
+        """
+        Return the list of portfolios from the server
+        """
+        folios = []
+        try:
+            response = self.get_url('/data/portfolioManagement?method=getLCPortfolios')
+            json = response.json()
+
+            if json['result'] == 'success':
+                folios = json['results']
+
+        except Exception as e:
+            self.logger.warning('Could not get list of portfolios for this account. Error message: {0}'.format(str(e)))
+
+        return folios
 
     def portfolioPicker(self, previousFolio=False):
         """
@@ -546,86 +613,77 @@ class AutoInvestor:
         print '\nPortfolios...'
 
         try:
-            # Get portfolio page HTML
-            response = self.get_url('/data/portfolioManagement?method=getLCPortfolios')
-            json = response.json()
+            folios = self.getPortfolioList()
 
-            if json['result'] == 'success':
+            # Print out the portfolio list
+            i = 1
+            otherIndex = 0
+            cancelIndex = 0
+            previousIndex = 0
+            for folio in folios:
+                print '{0}: {1}'.format(i, folio['portfolioName'])
 
-                # Print out the portfolio list
-                folios = json['results']
-                i = 1
-                otherIndex = 0
-                cancelIndex = 0
-                previousIndex = 0
-                for folio in folios:
-                    print '{0}: {1}'.format(i, folio['portfolioName'])
+                if previousFolio == folio['portfolioName']:
+                    previousFolio = False
 
-                    if previousFolio == folio['portfolioName']:
-                        previousFolio = False
-
-                    i += 1
-
-                if previousFolio is not False:
-                    previousIndex = i
-                    print '{0}: {1}'.format(previousIndex, previousFolio)
-                    i += 1
-
-                otherIndex = i
-                print '{0}: Other'.format(otherIndex)
                 i += 1
 
-                cancelIndex = i
-                print '{0}: Cancel'.format(cancelIndex)
+            if previousFolio is not False:
+                previousIndex = i
+                print '{0}: {1}'.format(previousIndex, previousFolio)
+                i += 1
 
-                # Choose a portfolio
-                while(True):
-                    choice = self.prompt('Choose one')
+            otherIndex = i
+            print '{0}: Other'.format(otherIndex)
+            i += 1
 
-                    if not choice.isdigit():
-                        continue
-                    choice = int(choice)
+            cancelIndex = i
+            print '{0}: Cancel'.format(cancelIndex)
 
-                    # No zero
-                    if choice == 0:
-                        continue
+            # Choose a portfolio
+            while(True):
+                choice = self.prompt('Choose one')
 
-                    # Existing portfolio chosen
-                    if choice <= len(folios):
-                        break
+                if not choice.isdigit():
+                    continue
+                choice = int(choice)
 
-                    # Previous
-                    elif choice == previousIndex:
-                        return previousFolio
+                # No zero
+                if choice == 0:
+                    continue
 
-                    # Other
-                    elif choice == otherIndex:
-                        while(True):
-                            other = self.prompt('Enter the name for your new portfolio')
+                # Existing portfolio chosen
+                if choice <= len(folios):
+                    break
 
-                            # Empty string entered, show list again
-                            if other.strip() == '':
-                                break
+                # Previous
+                elif choice == previousIndex:
+                    return previousFolio
 
-                            # Invalid character
-                            elif re.search('[^a-zA-Z0-9 ,_\-#\.]', other):
-                                print 'The portfolio name is not valid, only alphanumeric space , _ - # and . are allowed.'
+                # Other
+                elif choice == otherIndex:
+                    while(True):
+                        other = self.prompt('Enter the name for your new portfolio')
 
-                            # Return custom portfolio name
-                            else:
-                                return other
+                        # Empty string entered, show list again
+                        if other.strip() == '':
+                            break
 
-                    # Cancel
-                    else:
-                        return False
+                        # Invalid character
+                        elif re.search('[^a-zA-Z0-9 ,_\-#\.]', other):
+                            print 'The portfolio name is not valid, only alphanumeric space , _ - # and . are allowed.'
 
-                # Existing portfolio
-                if choice < otherIndex:
-                    return folios[choice - 1]['portfolioName']
+                        # Return custom portfolio name
+                        else:
+                            return other
 
-            else:
-                print 'Could not retrieve portfolio list'
-                return False
+                # Cancel
+                else:
+                    return False
+
+            # Existing portfolio
+            if choice < otherIndex:
+                return folios[choice - 1]['portfolioName']
 
         except Exception as e:
             self.logger.error(e)
@@ -720,7 +778,7 @@ class AutoInvestor:
         print 'To start, we need to log you into Lending Club (your password will never be saved)\n'
         while(True):
             self.settings['email'] = self.prompt('LendingClub email', self.settings['email'])
-            self.settings['pass'] = getpass.getpass()
+            self.settings['pass'] = self.get_password()
 
             print '\nAuthenticating...'
             if self.authenticate():
@@ -733,30 +791,33 @@ class AutoInvestor:
         return True
 
 
-def interuptHandler(signum, frame):
-    """
-    Exit gracefully
-    """
-    print '\n\nStopping program...\n'
-    exit()
-signal.signal(signal.SIGINT, interuptHandler)
+if __name__ == '__main__':
+    def interuptHandler(signum, frame):
+        """
+        Exit gracefully
+        """
+        print '\n\nStopping program...\n'
+        exit()
+    signal.signal(signal.SIGINT, interuptHandler)
 
-# Process command flags
-isVerbose = ('-v' in sys.argv)
-isDaemon = ('start' in sys.argv or 'stop' in sys.argv)
-isStopping = ('stop' in sys.argv)
-if '-h' in sys.argv:
-    print 'Usage: {0} [flags]\n'.format(sys.argv[0])
-    print '     -h    Show this message'
-    print '     -v    Verbose output\n'
-    print '     start    Start this as a daemon process'
-    print '     stop     Stop the running daemon process'
-    exit()
+    # Process command flags
+    isVerbose = ('-v' in sys.argv)
+    isDaemon = ('start' in sys.argv or 'stop' in sys.argv)
+    isStopping = ('stop' in sys.argv)
+    if '-h' in sys.argv:
+        print 'Usage: {0} [flags]\n'.format(sys.argv[0])
+        print '     -h    Show this message'
+        print '     -v    Verbose output\n'
+        print '     start    Start this as a daemon process'
+        print '     stop     Stop the running daemon process'
+        exit()
 
-# Start program
-investor = AutoInvestor(verbose=isVerbose, daemon=isDaemon, stopping=isStopping)
-if isDaemon:
-    daemon_runner = runner.DaemonRunner(investor)
-    daemon_runner.do_action()
-else:
-    investor.run()
+    # Start program
+    investor = AutoInvestor(verbose=isVerbose, daemon=isDaemon)
+    if not isStopping:
+        investor.setup()
+    if isDaemon:
+        daemon_runner = runner.DaemonRunner(investor)
+        daemon_runner.do_action()
+    else:
+        investor.run()
