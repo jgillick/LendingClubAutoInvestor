@@ -119,7 +119,11 @@ function processPOST(request, response, data){
     break;
     // Investment options
     case '/portfolio/lendingMatchOptionsV2.action':
-      outputFileAndEnd('lendingMatchOptionsV2.json', response);
+      if(data.filter == 'default'){
+        outputFileAndEnd('lendingMatchOptionsV2.json', response);
+      } else{
+        outputFileAndEnd('lendingMatchOptionsV2_filter.json', response);
+      }
     break;
     // Order confirmation
     case '/portfolio/orderConfirmed.action':

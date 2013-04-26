@@ -36,7 +36,8 @@ class AutoInvestor:
         'minCash': 500,
         'minPercent': False,
         'maxPercent': False,
-        'portfolio': False
+        'portfolio': False,
+        'filters': False
     }
 
     def __init__(self, verbose=False, daemon=False, stopping=False):
@@ -80,7 +81,14 @@ class AutoInvestor:
 
             # Investment settings
             print 'Now that you\'re signed in, let\'s define what you want to do\n'
-            self.get_investment_settings()
+
+            # Use the settings from last time
+            if self.settings['minPercent'] is not False and self.settings['maxPercent'] is not False:
+                self.show_summary('Prior Settings')
+                if not self.prompt_yn('Would you like to use these settings from last time?', 'y'):
+                    self.get_investment_settings()
+            else:
+                self.get_investment_settings()
 
             # All ready to start running
             print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
@@ -282,7 +290,7 @@ class AutoInvestor:
         default param should be either 'y' or 'n'
         Returns True if 'Y' and False if 'N'
         """
-        if default == 'y':
+        if default == 'y' or default is True:
             msg = "{0} [Y/n]: ".format(msg)
         elif default == 'n':
             msg = "{0} [y/N]: ".format(msg)
@@ -298,10 +306,68 @@ class AutoInvestor:
                 response = default
 
             # Return if valid
-            if response in ['y', 'yes']:
+            if response in ['y', 'yes'] or response is True:
                 return True
             elif response in ['n', 'no']:
                 return False
+
+    def prepare_filter_json(self):
+        """
+        Convert the filter dictionary into the JSON that LendingClub expects
+        """
+
+        # Start with JSON from LendingClub that has all options
+        baseJson = json.loads('[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%","sqlValue":null,"valueIndex":7}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]')
+        sendJson = list(baseJson)
+
+        # No filters set
+        if not self.settings['filters']:
+            return False
+
+        # Walk through the JSON that has ALL settings and remove the ones we've marked as False
+        i = 0
+        for field in baseJson:
+            fieldId = field['m_id']
+            fieldValues = field['m_value']
+
+            # Term (36 - 60 month)
+            if fieldId == 39:
+                v = 0
+                while(v < len(fieldValues)):
+                    value = fieldValues[v]
+                    if value['value'] == 'Year3' and not self.settings['filters']['36month']:
+                        del sendJson[i]['m_value'][v]
+                    elif value['value'] == 'Year5' and not self.settings['filters']['60month']:
+                        del sendJson[i]['m_value'][v]
+
+                    # Only increment if nothing was removed (removing changes the index)
+                    else:
+                        v += 1
+
+            # Exclude Loans already invested in
+            elif fieldId == 38:
+                if not self.settings['filters']['exclude_existing']:
+                    del sendJson[i]['m_value'][0]
+
+            # Interest rates
+            elif fieldId == 10:
+
+                v = 0
+                while(v < len(fieldValues)):
+                    value = fieldValues[v]
+                    valName = value['value']
+
+                    # Match the All, A - G to the Grade filters, if False, remove
+                    # if All is True, remove everything but the All field
+                    if self.settings['filters']['grades'][valName] is False or (self.settings['filters']['grades']['All'] is True and valName != 'All'):
+                        del sendJson[i]['m_value'][v]
+
+                    # Only increment if nothing was removed (removing changes the index)
+                    else:
+                        v += 1
+            i += 1
+
+        return sendJson
 
     def get_investment_option(self, cash):
         """
@@ -317,10 +383,13 @@ class AutoInvestor:
             minPercent = self.settings['minPercent']
 
             # Get all investment options
+            filters = self.prepare_filter_json()
+            if filters is False:
+                filters = 'default'
             payload = {
                 'amount': cash,
                 'max_per_note': 0,
-                'filter': 'default'
+                'filter': filters
             }
             response = self.post_url('/portfolio/lendingMatchOptionsV2.action', data=payload)
             json = response.json()
@@ -701,6 +770,32 @@ class AutoInvestor:
         if self.settings['portfolio']:
             print 'Add investments to: "{0}"'.format(self.settings['portfolio'])
 
+        # Filters
+        if self.settings['filters'] is not False:
+            print '\nAdvanced filters:'
+
+            # Exclude existing
+            if self.settings['filters']['exclude_existing']:
+                print '  + Exclude loans already invested in'
+
+            # Loan term
+            terms = []
+            if self.settings['filters']['36month']:
+                terms.append('36')
+            if self.settings['filters']['60month']:
+                terms.append('60')
+            print '  + Term: {0} months'.format(' & '.join(terms))
+
+            # Interest rate grades
+            if self.settings['filters']['grades']['All']:
+                print '   + All interest rate grades'
+            else:
+                grades = []
+                for grade in self.settings['filters']['grades']:
+                    if grade != 'All' and self.settings['filters']['grades'][grade] is True:
+                        grades.append(grade)
+                print '  + Interest rates grades: {0}'.format(', '.join(sorted(grades)))
+
         print '=========={0}==========\n'.format(''.center(len(title), '='))
 
     def get_investment_settings(self):
@@ -708,12 +803,6 @@ class AutoInvestor:
         Show the user a series of prompts to determine how they want the tool to automatically invest.
         This fills out the settings dictionary.
         """
-
-        # Use the settings from last time
-        if self.settings['minPercent'] is not False and self.settings['maxPercent'] is not False:
-            self.show_summary('Prior Settings')
-            if self.prompt_yn('Would you like to use these settings from last time?', 'y'):
-                return True
 
          # Minimum cash
         print '---------'
@@ -760,6 +849,11 @@ class AutoInvestor:
         else:
             self.settings['portfolio'] = False
 
+        # Advanced filter settings
+        print '\n---------'
+        if self.prompt_yn('Would you like to set advanced filter settings?', self.settings['filters'] is not False):
+            self.get_filter_settings()
+
         # Review summary
         self.show_summary()
         if self.prompt_yn('Would you like to continue with these settings?', 'y'):
@@ -768,6 +862,69 @@ class AutoInvestor:
             self.get_investment_settings()
 
         return True
+
+    def get_filter_settings(self):
+        filters = self.settings['filters']
+        if not filters:
+            filters = {
+                'exclude_existing': True,
+                '36month': True,
+                '60month': True,
+                'grades': {
+                    'All': True,
+                    'A': True,
+                    'B': True,
+                    'C': True,
+                    'D': True,
+                    'E': True,
+                    'F': True,
+                    'G': True
+                }
+            }
+
+        print 'The following questions are from the filters section of the Invest page on LendingClub\n'
+
+        filters['exclude_existing'] = self.prompt_yn('Exclude loans already invested in?', filters['exclude_existing'])
+
+        print '---------'
+        print 'Choose term (36 - 60 month)'
+
+        while(True):
+            filters['36month'] = self.prompt_yn('Include 36 month term loans?', filters['36month'])
+            filters['60month'] = self.prompt_yn('Include 60 month term loans?', filters['60month'])
+
+            # Validate 1 was chosen
+            if not filters['36month'] and not filters['60month']:
+                print 'You have to AT LEAST choose one term length!'
+            else:
+                break
+
+        print '---------'
+        print 'Choose interest rate grades (7.4% - 24.84%)'
+        while(True):
+            if self.prompt_yn('Include ALL interest rate grades', filters['grades']['All']):
+                filters['grades']['All'] = True
+            else:
+                filters['grades']['All'] = False
+                filters['grades']['A'] = self.prompt_yn('A - ~7.41%', filters['grades']['A'])
+                filters['grades']['B'] = self.prompt_yn('B - ~12.12%', filters['grades']['B'])
+                filters['grades']['C'] = self.prompt_yn('C - ~15.80%', filters['grades']['C'])
+                filters['grades']['D'] = self.prompt_yn('D - ~18.76%', filters['grades']['D'])
+                filters['grades']['E'] = self.prompt_yn('E - ~21.49%', filters['grades']['E'])
+                filters['grades']['F'] = self.prompt_yn('F - ~23.49%', filters['grades']['F'])
+                filters['grades']['G'] = self.prompt_yn('G - ~24.84%', filters['grades']['G'])
+
+            # Verify one was chosen
+            gradeChosen = False
+            for grade in filters['grades']:
+                if filters['grades'][grade] is True:
+                    gradeChosen = True
+            if not gradeChosen:
+                print 'You have to AT LEAST choose one interest rate grade!'
+            else:
+                break
+
+        self.settings['filters'] = filters
 
     def get_auth_settings(self):
         """

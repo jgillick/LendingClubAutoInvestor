@@ -157,7 +157,8 @@ class TestInvestorFlow(unittest.TestCase):
             'minCash': 100,
             'minPercent': 16.5,
             'maxPercent': 19.0,
-            'portfolio': 'TestPortfolio'
+            'portfolio': 'TestPortfolio',
+            'filters': False
         }
         self.investor.logger = TestLogger()
 
@@ -195,6 +196,55 @@ class TestInvestorFlow(unittest.TestCase):
         self.investor.settings['minPercent'] = 18.7
         match = self.investor.get_investment_option(200)
         self.assertFalse(match)
+
+    def test_investment_option_filters_below_percent(self):
+        """ Investment Options within below percent settings.
+        With filters set, the fixture data will return options below the min/max percent settings """
+
+        self.investor.settings['filters'] = {
+            'exclude_existing': True,
+            '36month': False,
+            '60month': True,
+            'grades': {
+                'All': False,
+                'A': True,
+                'B': True,
+                'C': True,
+                'D': False,
+                'E': False,
+                'F': False,
+                'G': False
+            }
+        }
+        match = self.investor.get_investment_option(200)
+        self.assertFalse(match)
+
+    def test_investment_option_filters_within_percent(self):
+        """ Investment Options within percent settings.
+        Set min/max settings to be within options returned with filters """
+
+        self.investor.settings['filters'] = {
+            'exclude_existing': True,
+            '36month': False,
+            '60month': True,
+            'grades': {
+                'All': False,
+                'A': True,
+                'B': True,
+                'C': True,
+                'D': False,
+                'E': False,
+                'F': False,
+                'G': False
+            }
+        }
+
+        # Default min/max are 16.5 - 19.0, filtered results fixture only goes up to 15.03
+        self.investor.settings['minPercent'] = 13.0
+        self.investor.settings['maxPercent'] = 14.5
+        match = self.investor.get_investment_option(200)
+        self.assertEqual(match['percentage'], 14.5)  # should be a perfect match
+
 
     def test_prepare_order(self):
         investmentOption = self.investor.get_investment_option(200)
@@ -267,7 +317,7 @@ class TestInvestorFlow(unittest.TestCase):
         self.assertEqual(len(self.investor.logger.errors), 0)
         self.assertEqual(len(self.investor.logger.warnings), 0)
 
-    def test_attempt_to_invest_not_enough_cash(self):
+    def test_attempt_to_invest_no_option_match(self):
         """ Test end-to-end investment without investment option match """
         # No options between 18.7 - 19.0
         self.investor.settings['minPercent'] = 18.7
