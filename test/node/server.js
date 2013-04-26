@@ -2,6 +2,8 @@
 A simple node server to emulate LendingClub's APIs for unit testing 
 */
 
+var PORT = 7357;
+
 var http = require('http'),
     url = require("url"),
     fs = require('fs'),
@@ -49,7 +51,7 @@ http.createServer(function (request, response) {
     response.end();
   }
 
-}).listen(7357, '127.0.0.1');
+}).listen(PORT, '127.0.0.1');
 
 /**
 * Write a file to the output
@@ -139,4 +141,4 @@ function processPOST(request, response, data){
 }
 
 
-util.log('Server running at http://127.0.0.1:7357/');
+util.log('Server running at http://127.0.0.1:'+ PORT +'/');
