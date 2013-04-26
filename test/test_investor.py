@@ -172,6 +172,24 @@ class TestInvestorFlow(unittest.TestCase):
         if os.path.exists(settingsFile):
             os.remove(settingsFile)
 
+    def set_filters(self):
+        """ Add filters to the investor settings """
+        self.investor.settings['filters'] = {
+            'exclude_existing': True,
+            '36month': False,
+            '60month': True,
+            'grades': {
+                'All': False,
+                'A': True,
+                'B': True,
+                'C': True,
+                'D': False,
+                'E': False,
+                'F': False,
+                'G': False
+            }
+        }
+
     def test_login(self):
         self.assertTrue(self.investor.authenticate())
 
@@ -197,25 +215,17 @@ class TestInvestorFlow(unittest.TestCase):
         match = self.investor.get_investment_option(200)
         self.assertFalse(match)
 
+    def test_investment_options_summary(self):
+        """ Test the options summary output """
+        match = self.investor.get_investment_option(200)
+        summary = self.investor.get_option_summary(match)
+        expected = 'Investment portfolio summary: 8 loan notes. 13% in B, 38% in C, 13% in D, 13% in E, 25% in F.'
+
     def test_investment_option_filters_below_percent(self):
         """ Investment Options within below percent settings.
         With filters set, the fixture data will return options below the min/max percent settings """
 
-        self.investor.settings['filters'] = {
-            'exclude_existing': True,
-            '36month': False,
-            '60month': True,
-            'grades': {
-                'All': False,
-                'A': True,
-                'B': True,
-                'C': True,
-                'D': False,
-                'E': False,
-                'F': False,
-                'G': False
-            }
-        }
+        self.set_filters()
         match = self.investor.get_investment_option(200)
         self.assertFalse(match)
 
@@ -223,28 +233,13 @@ class TestInvestorFlow(unittest.TestCase):
         """ Investment Options within percent settings.
         Set min/max settings to be within options returned with filters """
 
-        self.investor.settings['filters'] = {
-            'exclude_existing': True,
-            '36month': False,
-            '60month': True,
-            'grades': {
-                'All': False,
-                'A': True,
-                'B': True,
-                'C': True,
-                'D': False,
-                'E': False,
-                'F': False,
-                'G': False
-            }
-        }
+        self.set_filters()
 
         # Default min/max are 16.5 - 19.0, filtered results fixture only goes up to 15.03
         self.investor.settings['minPercent'] = 13.0
         self.investor.settings['maxPercent'] = 14.5
         match = self.investor.get_investment_option(200)
         self.assertEqual(match['percentage'], 14.5)  # should be a perfect match
-
 
     def test_prepare_order(self):
         investmentOption = self.investor.get_investment_option(200)
