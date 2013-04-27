@@ -89,7 +89,7 @@ This value relates to finding a investment portfolio using the slider on the Inv
 After the auto investor puts in an investment order, it can assign all the new notes to a specific portfolio. This option lets you choose from existing portfolios in your account or create a new one.
 
 ### Advanced Filters
-**Experimental**
+**Experimental!** 
 These are the filters from the [Invest page](https://www.lendingclub.com/portfolio/autoInvest.action) on LendingClub that will let you filter out investments by term length, loans you're already invested in and interest rate grades (A - G).
 
 ### Final Review
