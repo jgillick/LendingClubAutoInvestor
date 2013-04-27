@@ -98,10 +98,3 @@ After all the options are set, you will be given a review screen to verify those
 Help out
 --------------------
 Please help me by forking and committing enhancements!
-
-Feature Requests
---------------------
-For people who would like to contribute, here are some features I'd like to add to the tool.
-
-### Detect existing daemon
-Currently if you try to start the tool as a daemon, and one is already running, it seems to start without error. Instead, we should check if one is currently running (maybe check the lock file?) and then display an error message to the user.
