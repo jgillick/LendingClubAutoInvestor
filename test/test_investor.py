@@ -150,7 +150,7 @@ class TestInvestorFlow(unittest.TestCase):
         # Create investor object
         self.investor = AutoInvestor()
         self.investor.baseUrl = 'http://localhost:7357'
-        self.investor.get_settings_filepath = lambda: os.path.join(os.path.dirname(os.path.realpath(__file__)), '.investortest')
+        self.investor.settings_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.investortest')
         self.investor.settings = {
             'email': 'test@test.com',
             'pass': 'testpassword',
@@ -168,9 +168,8 @@ class TestInvestorFlow(unittest.TestCase):
             self.server.kill()
 
         # Delete settings file
-        settingsFile = self.investor.get_settings_filepath()
-        if os.path.exists(settingsFile):
-            os.remove(settingsFile)
+        if os.path.exists(self.investor.settings_file):
+            os.remove(self.investor.settings_file)
 
     def set_filters(self):
         """ Add filters to the investor settings """

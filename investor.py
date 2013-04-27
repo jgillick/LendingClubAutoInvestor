@@ -17,12 +17,14 @@ from bs4 import BeautifulSoup
 class AutoInvestor:
 
     baseUrl = 'https://www.lendingclub.com/'
-    baseDir = os.path.dirname(os.path.realpath(__file__))
     authed = False
     cookies = {}
     verbose = False
     loopDelay = 60 * 30  # 30 minutes in between loops
+
+    baseDir = os.path.dirname(os.path.realpath(__file__))
     logFile = os.path.join(baseDir, 'daemon.log')
+    settings_file = os.path.join(baseDir, '.investor')
 
     requestHeaders = {
         'Referer': 'https://www.lendingclub.com/',
@@ -146,12 +148,6 @@ class AutoInvestor:
         except ValueError:
             return False
 
-    def get_settings_filepath(self):
-        """
-        Return the file path to the settings file
-        """
-        return os.path.join(self.baseDir, '.investor')
-
     def save_settings(self):
         """
         Save the settings dict to a file
@@ -167,7 +163,7 @@ class AutoInvestor:
 
             # Save
             self.logger.debug('Saving settings: {0}'.format(jsonOut))
-            settingsFile = self.get_settings_filepath()
+            settingsFile = self.settings_file
 
             f = open(settingsFile, 'w')
             f.write(jsonOut)
@@ -182,7 +178,7 @@ class AutoInvestor:
         """
         Returned the saved settings used last time this program was run
         """
-        settingsFile = self.get_settings_filepath()
+        settingsFile = self.settings_file
         if os.path.exists(settingsFile):
             self.logger.debug('Loading saved settings file')
             try:
