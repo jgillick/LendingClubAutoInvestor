@@ -42,7 +42,7 @@ class AutoInvestor:
         'filters': False
     }
 
-    def __init__(self, verbose=False, daemon=False, stopping=False):
+    def __init__(self, verbose=False, daemon=False):
         self.verbose = verbose
         self.create_logger()
 
@@ -52,14 +52,7 @@ class AutoInvestor:
             self.stdout_path = self.logFile
             self.stderr_path = self.logFile
             self.pidfile_path = '/tmp/investor.pid'
-            self.pidfile_timeout = 5
-
-            if not stopping:
-                print 'Starting auto investor daemon...'
-                print 'pid at {0}'.format(self.pidfile_path)
-                print 'Logging output to {0}'.format(self.logFile)
-            else:
-                print 'Stoping auto investor daemon...'
+            self.pidfile_timeout = 1
 
     def setup(self):
         """
@@ -99,6 +92,10 @@ class AutoInvestor:
         """
         Start the investment loop
         """
+        print 'Starting auto investor daemon...'
+        print 'pid at {0}'.format(self.pidfile_path)
+        print 'Logging output to {0}'.format(self.logFile)
+
         self.investment_loop()
 
     def create_logger(self):
@@ -979,21 +976,41 @@ if __name__ == '__main__':
     # Process command flags
     isVerbose = ('-v' in sys.argv)
     isDaemon = ('start' in sys.argv or 'stop' in sys.argv)
-    isStopping = ('stop' in sys.argv)
-    if '-h' in sys.argv:
+    isStarting = ('start' in sys.argv)
+
+    # Restart not supported
+    if 'restart' in sys.argv:
+        print 'restart action not supported'
+        exit()
+
+    if '-h' in sys.argv or '--help' in sys.argv:
         print 'Usage: {0} [flags]\n'.format(sys.argv[0])
         print '     -h    Show this message'
         print '     -v    Verbose output\n'
-        print '     start    Start this as a daemon process'
+        print '     start    Start as a daemon process'
         print '     stop     Stop the running daemon process'
         exit()
 
     # Start program
     investor = AutoInvestor(verbose=isVerbose, daemon=isDaemon)
-    if not isStopping:
-        investor.setup()
+
     if isDaemon:
+
+        if isStarting:
+
+            # Check if the pid file is locked
+            lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
+            if lockfile.is_locked():
+                print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
+                exit()
+
+            investor.setup()
+        else:
+            print 'Stopping auto investor daemon...'
+
+        # Start daemon
         daemon_runner = runner.DaemonRunner(investor)
         daemon_runner.do_action()
     else:
+        investor.setup()
         investor.run()
