@@ -47,18 +47,6 @@ Current Limitations
 You **CANNOT** set search filters or exclude specific loan notes or loan
 grades.
 
-Install
--------
-
-This can be run directly from the bin directory or installed globally, by running:
-
-::
-    sudo python ./setup install
-
-Or from `pip <http://www.pip-installer.org/en/latest/>`__ with:
-
-::
-    sudo pip install lcinvestor
 
 Requirements
 ~~~~~~~~~~~~
@@ -74,6 +62,14 @@ These can automatically be installed with `pip <http://www.pip-installer.org/en/
 ::
 
     sudo pip install python-daemon requests beautifulsoup4 html5lib argparse
+
+Install
+-------
+
+This can be run directly from the bin directory or installed globally, by running:
+
+::
+    sudo python ./setup.py install
 
 Running
 -------
@@ -107,14 +103,14 @@ To stop the daemon run:
 
     $ lcinvestor stop
 
-Usage
-~~~~~
+Help and Usage
+~~~~~~~~~~~~~~
 
 To see the usage info
 
 ::
 
-    $ lcinvestor -h
+    $ lcinvestor --help
 
 Options
 -------
