@@ -10,7 +10,7 @@ setup(
     url='https://github.com/jgillick/LendingClubAutoInvestor',
     license='LICENSE.txt',
     description='A simple tool that will watch your LendingClub account and automatically invest cash as it becomes available.',
-    long_description=open('README.txt').read(),
+    long_description=open('README.rst').read(),
     install_requires=[
         "python-daemon >= 1.6",
         "requests >= 1.2.0",
