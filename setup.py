@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='lcinvestor',
-    version='0.5',
+    version='1.0',
     author='Jeremy Gillick',
     author_email='j_gillick@yahoo.com',
     packages=['LendingClubInvestor', 'LendingClubInvestor.tests'],
