@@ -1,12 +1,14 @@
 #!/usr/bin/python
 
-import unittest
 import sys
+import os
+import unittest
 import subprocess
+import urllib
+from time import sleep
 
-sys.path.insert(0,'../')
-
-from investor import *
+sys.path.append('../../')
+from LendingClubInvestor import AutoInvestor
 
 
 class TestInvestorUtils(unittest.TestCase):
@@ -142,10 +144,25 @@ class TestInvestorFlow(unittest.TestCase):
     server = None
     investor = None
 
-    def setUp(self):
-        # Start dummy server
+    def startNode(self):
+        """ Start the node server, if it's not already running """
+
+        # Check if it's running
+        try:
+            if urllib.urlopen('http://localhost:7357').getcode() == 200:
+                return True
+        except Exception:
+            pass
+
+        # Start
         self.server = subprocess.Popen('node ./node/server.js', shell=True, stdout=subprocess.PIPE)
         sleep(.2)  # startup time
+
+        return True
+
+    def setUp(self):
+        # Start dummy server
+        self.startNode()
 
         # Create investor object
         self.investor = AutoInvestor()
@@ -219,6 +236,7 @@ class TestInvestorFlow(unittest.TestCase):
         match = self.investor.get_investment_option(200)
         summary = self.investor.get_option_summary(match)
         expected = 'Investment portfolio summary: 8 loan notes. 13% in B, 38% in C, 13% in D, 13% in E, 25% in F.'
+        self.assertEqual(summary, expected)
 
     def test_investment_option_filters_below_percent(self):
         """ Investment Options within below percent settings.

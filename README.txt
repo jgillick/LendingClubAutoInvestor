@@ -50,22 +50,26 @@ grades.
 Install
 -------
 
-As long as the requirements are met, you can run the script right from
-where it is on your system (see `Running <#running>`__).
+This can be run directly from the bin directory or installed globally, by running:
+
+::
+    sudo python ./setup install
+
+Or from `pip <http://www.pip-installer.org/en/latest/>`__ with:
+
+::
+    sudo pip install lcinvestor
 
 Requirements
 ~~~~~~~~~~~~
 
-Currently there is no installer, so you have to install the following
-packages manually or with
-`pip <http://www.pip-installer.org/en/latest/>`__. \* python-daemon \*
-requests \* beautifulsoup4 \* html5lib \* argparse
+ * python-daemon
+ * requests
+ * beautifulsoup4
+ * html5lib
+ * argparse
 
-With the pip installer
-^^^^^^^^^^^^^^^^^^^^^^
-
-if you have `pip <http://www.pip-installer.org/en/latest/>`__ installed,
-you can automatically install all requirements with this command:
+These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`__:
 
 ::
 
@@ -81,7 +85,7 @@ To start the tool in the foreground:
 
 ::
 
-    python ./investor.py
+    $ lcinvestor
 
 The script will run in a loop and print all the output to the screen
 until you exit it with CTRL+C.
@@ -93,16 +97,15 @@ To run it as a background daemon
 
 ::
 
-    python ./investor.py start
+    $ lcinvestor start
 
-All output will be sent to ``daemon.log`` which is located in the same
-directory as investor.py.
+All output will be sent to ``/var/log/daemon.log``.
 
 To stop the daemon run:
 
 ::
 
-    python ./investor.py stop
+    $ lcinvestor stop
 
 Usage
 ~~~~~
@@ -111,7 +114,7 @@ To see the usage info
 
 ::
 
-    python ./investor.py -h
+    $ lcinvestor -h
 
 Options
 -------

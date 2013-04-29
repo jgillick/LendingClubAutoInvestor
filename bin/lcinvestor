@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+
+"""
+The MIT License (MIT)
+
+Copyright (c) 2013 Jeremy Gillick
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+"""
+
+import signal
+import sys
+import daemon
+from daemon import runner
+import argparse
+
+# Add local paths to support running without installing
+if sys.argv[0][0:2] == './':
+    sys.path.append('.')
+    sys.path.append('../')
+
+import LendingClubInvestor
+
+if __name__ == '__main__':
+    def interupt_handler(signum, frame):
+        """
+        Exit gracefully
+        """
+        print '\n\nStopping program...\n'
+        exit()
+    signal.signal(signal.SIGINT, interupt_handler)
+
+    # Process command flags
+    parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
+    parser.add_argument('start/stop', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon)')
+    options = parser.parse_args()
+
+    options.action = options.__dict__['start/stop']
+    action = options.action[0] if (len(options.action) > 0) else None
+    isVerbose = options.verbose
+    isDaemon = (action is not None)
+    isStarting = ('start' == action)
+    isStopping = ('stop' == action)
+
+    # Validate options
+    if len(options.action) > 1:
+        print 'Too many arguments!'
+        exit()
+    if action is not None and action not in ['start', 'stop']:
+        print '\'{0}\' is not a supported action!'.format(action)
+        exit()
+
+    if False and '-h' in sys.argv or '--help' in sys.argv:
+        print 'Usage: {0} [flags]\n'.format(sys.argv[0])
+        print '     -h    Show this message'
+        print '     -v    Verbose output\n'
+        print '     start    Start as a daemon process'
+        print '     stop     Stop the running daemon process'
+        exit()
+
+    # Start program
+    investor = LendingClubInvestor.AutoInvestor(verbose=isVerbose, daemon=isDaemon)
+
+    if isDaemon:
+
+        # Check if the pid locked file ststus
+        lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
+        if isStarting and lockfile.is_locked():
+            print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
+            exit()
+        elif isStopping and not lockfile.is_locked():
+            print 'It doesn\'t look like there is an investor daemon running.'
+            exit()
+
+        if isStarting:
+            investor.setup()
+        else:
+            print 'Stopping auto investor daemon...'
+
+        # Start daemon
+        try:
+            daemon_runner = runner.DaemonRunner(investor)
+            daemon_runner.do_action()
+        except daemon.runner.DaemonRunnerStartFailureError as e:
+            print 'Could not start daemon: {0}'.format(str(e))
+        except daemon.runner.DaemonRunnerStopFailureError as e:
+            print 'Could not stop daemon: {0}'.format(str(e))
+    else:
+        investor.setup()
+        investor.run()

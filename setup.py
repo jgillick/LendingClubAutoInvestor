@@ -1,11 +1,11 @@
 from distutils.core import setup
 
 setup(
-    name='LendingClubAutoInvestor',
+    name='lcinvestor',
     version='0.5',
     author='Jeremy Gillick',
     author_email='j_gillick@yahoo.com',
-    packages=[],
+    packages=['LendingClubInvestor'],
     scripts=['bin/investor.py'],
     url='https://github.com/jgillick/LendingClubAutoInvestor',
     license='LICENSE.txt',

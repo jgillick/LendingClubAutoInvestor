@@ -24,20 +24,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-import signal
-import sys
 import os
 import re
 import logging
 import getpass
 import requests
 import json
-import daemon
-from daemon import runner
 from time import sleep
 from bs4 import BeautifulSoup
-import argparse
-#import html5lib
 
 
 class AutoInvestor:
@@ -464,7 +458,7 @@ class AutoInvestor:
             if investmentOption[grade] > 0.0:
                 percent = int(round(investmentOption[grade]))
                 grade = grade.upper()
-                breakdown.append('{0}% in {1}'.format(percent, 'a'))
+                breakdown.append('{0}% in {1}'.format(percent, grade))
 
         if len(breakdown) > 0:
             summary += ', '.join(breakdown)
@@ -994,73 +988,3 @@ class AutoInvestor:
         print 'Success!\n'
         print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
         return True
-
-
-if __name__ == '__main__':
-    def interupt_handler(signum, frame):
-        """
-        Exit gracefully
-        """
-        print '\n\nStopping program...\n'
-        exit()
-    signal.signal(signal.SIGINT, interupt_handler)
-
-    # Process command flags
-    parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
-    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
-    parser.add_argument('start/stop', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon)')
-    options = parser.parse_args()
-
-    options.action = options.__dict__['start/stop']
-    action = options.action[0] if (len(options.action) > 0) else None
-    isVerbose = options.verbose
-    isDaemon = (action is not None)
-    isStarting = ('start' == action)
-    isStopping = ('stop' == action)
-
-    # Validate options
-    if len(options.action) > 1:
-        print 'Too many arguments!'
-        exit()
-    if action is not None and action not in ['start', 'stop']:
-        print '\'{0}\' is not a supported action!'.format(action)
-        exit()
-
-    if False and '-h' in sys.argv or '--help' in sys.argv:
-        print 'Usage: {0} [flags]\n'.format(sys.argv[0])
-        print '     -h    Show this message'
-        print '     -v    Verbose output\n'
-        print '     start    Start as a daemon process'
-        print '     stop     Stop the running daemon process'
-        exit()
-
-    # Start program
-    investor = AutoInvestor(verbose=isVerbose, daemon=isDaemon)
-
-    if isDaemon:
-
-        # Check if the pid locked file ststus
-        lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
-        if isStarting and lockfile.is_locked():
-            print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
-            exit()
-        elif isStopping and not lockfile.is_locked():
-            print 'It doesn\'t look like there is an investor daemon running.'
-            exit()
-
-        if isStarting:
-            investor.setup()
-        else:
-            print 'Stopping auto investor daemon...'
-
-        # Start daemon
-        try:
-            daemon_runner = runner.DaemonRunner(investor)
-            daemon_runner.do_action()
-        except daemon.runner.DaemonRunnerStartFailureError as e:
-            print 'Could not start daemon: {0}'.format(str(e))
-        except daemon.runner.DaemonRunnerStopFailureError as e:
-            print 'Could not stop daemon: {0}'.format(str(e))
-    else:
-        investor.setup()
-        investor.run()
