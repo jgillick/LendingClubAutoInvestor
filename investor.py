@@ -21,6 +21,7 @@ class AutoInvestor:
     baseUrl = 'https://www.lendingclub.com/'
     authed = False
     cookies = {}
+    isDaemon = False
     verbose = False
     loopDelay = 60 * 30  # 30 minutes in between loops
 
@@ -45,6 +46,7 @@ class AutoInvestor:
     }
 
     def __init__(self, verbose=False, daemon=False):
+        self.isDaemon = daemon
         self.verbose = verbose
         self.create_logger()
 
@@ -92,11 +94,14 @@ class AutoInvestor:
 
     def run(self):
         """
-        Start the investment loop
+        Start the auto investor loop which will check the LendingClub account every 30 minutes for
+        funds to invest
         """
-        print 'Starting auto investor daemon...'
-        print 'pid at {0}'.format(self.pidfile_path)
-        print 'Logging output to {0}'.format(self.logFile)
+
+        if self.isDaemon:
+            print 'Starting auto investor daemon...'
+            print 'pid at {0}'.format(self.pidfile_path)
+            print 'Logging output to {0}'.format(self.logFile)
 
         self.investment_loop()
 
