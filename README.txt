@@ -41,12 +41,6 @@ Through easy-to-use command prompts, you can set the minimum cash to
 invest and the min/max *average* interest rate portfolio you want to
 invest in.
 
-Current Limitations
--------------------
-
-You **CANNOT** set search filters or exclude specific loan notes or loan
-grades.
-
 
 Requirements
 ~~~~~~~~~~~~
