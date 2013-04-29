@@ -45,8 +45,9 @@ class AutoInvestor:
 
     homeDir = os.path.expanduser('~')
     baseDir = os.path.dirname(os.path.realpath(__file__))
-    logFile = os.path.join('/var/log/', 'daemon.log')
-    settings_file = os.path.join(homeDir, '.lcinvestor')
+    appDir = os.path.join(homeDir, '.lcinvestor')
+    logFile = os.path.join(appDir, 'daemon.log')
+    settings_file = os.path.join(appDir, 'settings.json')
 
     requestHeaders = {
         'Referer': 'https://www.lendingclub.com/',
@@ -68,6 +69,12 @@ class AutoInvestor:
         self.isDaemon = daemon
         self.verbose = verbose
         self.create_logger()
+
+        # Setup user directory
+        if os.path.exists(self.appDir) and not os.path.isdir(self.appDir):
+            raise AutoInvestorError('The path \'{0}\' is not a directory.'.format(self.appDir))
+        elif not os.path.exists(self.appDir):
+            os.mkdir(self.appDir)
 
         # Daemon settings
         if daemon:
@@ -116,12 +123,6 @@ class AutoInvestor:
         Start the auto investor loop which will check the LendingClub account every 30 minutes for
         funds to invest
         """
-
-        if self.isDaemon:
-            print 'Starting auto investor daemon...'
-            print 'pid at {0}'.format(self.pidfile_path)
-            print 'Logging output to {0}'.format(self.logFile)
-
         self.investment_loop()
 
     def create_logger(self):
@@ -336,7 +337,7 @@ class AutoInvestor:
         """
 
         # Start with JSON from LendingClub that has all options
-        baseJson = json.loads('[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%","sqlValue":null,"valueIndex":7}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]')
+        baseJson = json.loads('[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%</span>","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%</span>","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%</span>","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%</span>","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%</span>","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%</span>","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%</span>","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%</span>","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%</span>","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%</span>","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%</span>","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%</span>","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%</span>","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%</span>","sqlValue":null,"valueIndex":7}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]')
         sendJson = list(baseJson)
 
         # No filters set
@@ -386,6 +387,7 @@ class AutoInvestor:
                         v += 1
             i += 1
 
+        sendJson = json.dumps(sendJson)
         return sendJson
 
     def get_investment_option(self, cash):
@@ -587,7 +589,6 @@ class AutoInvestor:
             self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2}'.format(orderID, self.settings['portfolio'], str(e)))
 
         return False
-
 
     def get_cash_balance(self):
         """
@@ -988,3 +989,12 @@ class AutoInvestor:
         print 'Success!\n'
         print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
         return True
+
+
+class AutoInvestorError(Exception):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
