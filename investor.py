@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import signal
 import sys
@@ -8,9 +8,11 @@ import logging
 import getpass
 import requests
 import json
+import daemon
 from daemon import runner
 from time import sleep
 from bs4 import BeautifulSoup
+import argparse
 #import html5lib
 
 
@@ -974,16 +976,27 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, interupt_handler)
 
     # Process command flags
-    isVerbose = ('-v' in sys.argv)
-    isDaemon = ('start' in sys.argv or 'stop' in sys.argv)
-    isStarting = ('start' in sys.argv)
+    parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
+    parser.add_argument('start/stop', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon)')
+    options = parser.parse_args()
 
-    # Restart not supported
-    if 'restart' in sys.argv:
-        print 'restart action not supported'
+    options.action = options.__dict__['start/stop']
+    action = options.action[0] if (len(options.action) > 0) else None
+    isVerbose = options.verbose
+    isDaemon = (action is not None)
+    isStarting = ('start' == action)
+    isStopping = ('stop' == action)
+
+    # Validate options
+    if len(options.action) > 1:
+        print 'Too many arguments!'
+        exit()
+    if action is not None and action not in ['start', 'stop']:
+        print '\'{0}\' is not a supported action!'.format(action)
         exit()
 
-    if '-h' in sys.argv or '--help' in sys.argv:
+    if False and '-h' in sys.argv or '--help' in sys.argv:
         print 'Usage: {0} [flags]\n'.format(sys.argv[0])
         print '     -h    Show this message'
         print '     -v    Verbose output\n'
@@ -996,21 +1009,28 @@ if __name__ == '__main__':
 
     if isDaemon:
 
+        # Check if the pid locked file ststus
+        lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
+        if isStarting and lockfile.is_locked():
+            print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
+            exit()
+        elif isStopping and not lockfile.is_locked():
+            print 'It doesn\'t look like there is an investor daemon running.'
+            exit()
+
         if isStarting:
-
-            # Check if the pid file is locked
-            lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
-            if lockfile.is_locked():
-                print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
-                exit()
-
             investor.setup()
         else:
             print 'Stopping auto investor daemon...'
 
         # Start daemon
-        daemon_runner = runner.DaemonRunner(investor)
-        daemon_runner.do_action()
+        try:
+            daemon_runner = runner.DaemonRunner(investor)
+            daemon_runner.do_action()
+        except daemon.runner.DaemonRunnerStartFailureError as e:
+            print 'Could not start daemon: {0}'.format(str(e))
+        except daemon.runner.DaemonRunnerStopFailureError as e:
+            print 'Could not stop daemon: {0}'.format(str(e))
     else:
         investor.setup()
         investor.run()

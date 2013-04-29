@@ -35,11 +35,17 @@ Install
 As long as the requirements are met, you can run the script right from where it is on your system (see [Running](#running)).
 
 ### Requirements
-Currently there is no installer, so you have to install the following packages manually or with [pip](https://pypi.python.org/pypi/pip).
+Currently there is no installer, so you have to install the following packages manually or with [pip](http://www.pip-installer.org/en/latest/).
  * python-daemon
  * requests
  * beautifulsoup4
  * html5lib
+ * argparse
+
+#### With the pip installer
+if you have [pip](http://www.pip-installer.org/en/latest/) installed, you can automatically install all requirements with this command:
+
+    sudo pip install python-daemon requests beautifulsoup4 html5lib argparse
 
 Running
 --------------------
