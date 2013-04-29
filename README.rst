@@ -63,6 +63,7 @@ Install
 This can be run directly from the bin directory or installed globally, by running:
 
 ::
+
     sudo python ./setup.py install
 
 Running
@@ -138,8 +139,8 @@ rate value you will accept. The investment option closest to the maximum
 value will be chosen and all your available cash will be invested in it.
 
 This value relates to finding a investment portfolio using the slider on
-the Invest
-page](https://www.lendingclub.com/portfolio/autoInvest.action) on
+the `Invest
+page <https://www.lendingclub.com/portfolio/autoInvest.action>`__ on
 LendingClub.com. It's not possible, at any given time, to define an
 absolute interest rate value, so we need to know the range that you will
 accept.
