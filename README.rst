@@ -60,7 +60,7 @@ These can automatically be installed with `pip <http://www.pip-installer.org/en/
 Install
 -------
 
-This can be run directly from the bin directory or installed globally, by running:
+The tool can be run directly from the bin directory *or* installed globally, by running:
 
 ::
 
