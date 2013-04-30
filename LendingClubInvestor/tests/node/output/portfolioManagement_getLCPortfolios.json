@@ -3,7 +3,7 @@
   "result": "success",
   "results": [
     {
-      "portfolioName": "Initial",
+      "portfolioName": "Existing Portfolio",
       "portfolioId": 12345,
       "rate": "20.03%",
       "amountLent": 10000,

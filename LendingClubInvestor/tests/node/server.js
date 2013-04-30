@@ -1,5 +1,5 @@
 /**
-A simple node server to emulate LendingClub's APIs for unit testing 
+A simple node server to emulate LendingClub's APIs for unit testing
 */
 
 var PORT = 7357;
@@ -28,7 +28,7 @@ http.createServer(function (request, response) {
     });
     processGET(request, response);
   }
-  
+
   /*
     POST requests
   */
@@ -81,6 +81,9 @@ function processGET(request, response){
     case '/data/portfolioManagement':
       if(query['method'] && query['method'] == 'getLCPortfolios'){
         outputFileAndEnd('portfolioManagement_getLCPortfolios.json', response);
+      } else {
+        response.write('Unknown method: '+ query['method']);
+        response.end();
       }
     break;
     // Start order
@@ -93,8 +96,8 @@ function processGET(request, response){
     case '/portfolio/placeOrder.action':
       outputFileAndEnd('placeOrder.html', response);
     break;
-    default: 
-      response.write("Donno what to do");
+    default:
+      response.write("Unknown GET: "+ path);
       response.end();
   }
 }
@@ -106,6 +109,7 @@ function processPOST(request, response, data){
   var path = url.parse(request.url).pathname,
       query = url.parse(request.url, true).query;
   switch(path){
+
     // Login - if the email and password match, set the cookie
     case '/account/login.action':
       if(data.login_email == authEmail && data.login_password == authPassword){
@@ -117,6 +121,7 @@ function processPOST(request, response, data){
       response.write("Test Response");
       response.end();
     break;
+
     // Investment options
     case '/portfolio/lendingMatchOptionsV2.action':
       if(data.filter == 'default'){
@@ -125,21 +130,28 @@ function processPOST(request, response, data){
         outputFileAndEnd('lendingMatchOptionsV2_filter.json', response);
       }
     break;
+
     // Order confirmation
     case '/portfolio/orderConfirmed.action':
       outputFileAndEnd('orderConfirmed.html', response);
     break;
+
     // Assign to portfolio
     case '/data/portfolioManagement':
       if(query.method == 'addToLCPortfolio'){
-        outputFileAndEnd('portfolioManagement_addToLCPortfolio.json', response); 
+        outputFileAndEnd('portfolioManagement_addToLCPortfolio.json', response);
+
+      } else if(query.method == 'createLCPortfolio'){
+        outputFileAndEnd('portfolioManagement_createLCPortfolio.json', response);
+
       } else {
-        response.write("Unknown post");
+        response.write('Unknown method: '+ query.method);
         response.end();
       }
     break;
+
     default:
-      response.write("Unknown post");
+      response.write('Unknown post: ' + path);
       response.end();
   }
 }

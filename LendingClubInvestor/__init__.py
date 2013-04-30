@@ -557,17 +557,20 @@ class AutoInvestor:
 
         return (orderID, loanID)
 
-    def assign_to_portfolio(self, orderID=0, loanID=0):
+    def assign_to_portfolio(self, orderID=0, loanID=0, returnJson=False):
         """
         Assign an order to a the portfolio named in the settings dictionary.
+        If returnJson is true, this method will return the JSON from the server instead of True/False (this is primarily for unit testing)
         """
 
         # Assign to portfolio
+        resText = ''
         try:
             if not self.settings['portfolio']:
                 return True
 
             if loanID != 0 and orderID != 0:
+                # Data
                 postData = {
                     'loan_id': str(loanID),
                     'record_id': str(loanID),
@@ -577,16 +580,39 @@ class AutoInvestor:
                     'method': 'addToLCPortfolio',
                     'lcportfolio_name': self.settings['portfolio']
                 }
-                response = self.post_url('/data/portfolioManagement', params=paramData, data=postData)
 
-                if response.status_code != 200 or response.json()['result'] != 'success':
+                # New portfolio
+                folioList = self.get_portfolio_list()
+                if self.settings['portfolio'] not in folioList:
+                    paramData['method'] = 'createLCPortfolio'
+
+                # Send
+                response = self.post_url('/data/portfolioManagement', params=paramData, data=postData)
+                resText = response.text
+                resJson = response.json()
+
+                if returnJson is True:
+                    return resJson
+
+                # Failed if the response is not 200 or JSON result is not success
+                if response.status_code != 200 or resJson['result'] != 'success':
                     self.logger.error('Could not assign order #{0} to portfolio \'{1}: Server responded with {2}\''.format(str(orderID), self.settings['portfolio'], response.text))
+
+                # Success
                 else:
-                    self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.settings['portfolio']))
+
+                    # Assigned to another portfolio, for some reason, raise warning
+                    if 'portfolioName' in resJson and resJson['portfolioName'] != self.settings['portfolio']:
+                        self.logger.warning('Added order #{0} to portfolio "{1}" - NOT - "{2}", and I don\'t know why'.format(str(orderID), resJson['portfolioName'], self.settings['portfolio']))
+
+                    # Return
+                    else:
+                        self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.settings['portfolio']))
+
                     return True
 
         except Exception as e:
-            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2}'.format(orderID, self.settings['portfolio'], str(e)))
+            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2} -- {3}'.format(orderID, self.settings['portfolio'], str(e), resText))
 
         return False
 
@@ -702,20 +728,23 @@ class AutoInvestor:
 
     def get_portfolio_list(self):
         """
-        Return the list of portfolios from the server
+        Return the list of portfolio names from the server
         """
-        folios = []
+        foliosNames = []
         try:
             response = self.get_url('/data/portfolioManagement?method=getLCPortfolios')
             json = response.json()
 
+            # Get portfolios and create a list of names
             if json['result'] == 'success':
                 folios = json['results']
+                for folio in folios:
+                    foliosNames.append(folio['portfolioName'])
 
         except Exception as e:
             self.logger.warning('Could not get list of portfolios for this account. Error message: {0}'.format(str(e)))
 
-        return folios
+        return foliosNames
 
     def portfolio_picker(self, previousFolio=False):
         """
@@ -733,9 +762,9 @@ class AutoInvestor:
             cancelIndex = 0
             previousIndex = 0
             for folio in folios:
-                print '{0}: {1}'.format(i, folio['portfolioName'])
+                print '{0}: {1}'.format(i, folio)
 
-                if previousFolio == folio['portfolioName']:
+                if previousFolio == folio:
                     previousFolio = False
 
                 i += 1
@@ -795,7 +824,7 @@ class AutoInvestor:
 
             # Existing portfolio
             if choice < otherIndex:
-                return folios[choice - 1]['portfolioName']
+                return folios[choice - 1]
 
         except Exception as e:
             self.logger.error(e)

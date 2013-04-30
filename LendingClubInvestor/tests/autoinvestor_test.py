@@ -7,7 +7,8 @@ import subprocess
 import urllib
 from time import sleep
 
-sys.path.append('../../')
+sys.path.insert(0, '.')
+sys.path.insert(0, '../')
 from LendingClubInvestor import AutoInvestor
 
 
@@ -155,7 +156,9 @@ class TestInvestorFlow(unittest.TestCase):
             pass
 
         # Start
-        self.server = subprocess.Popen('node ./node/server.js', shell=True, stdout=subprocess.PIPE)
+        baseDir = os.path.dirname(os.path.realpath(__file__))
+        nodeServer = os.path.join(baseDir, 'node/server.js')
+        self.server = subprocess.Popen('node {0}'.format(nodeServer), shell=True, stdout=subprocess.PIPE)
         sleep(.2)  # startup time
 
         return True
@@ -174,7 +177,7 @@ class TestInvestorFlow(unittest.TestCase):
             'minCash': 100,
             'minPercent': 16.5,
             'maxPercent': 19.0,
-            'portfolio': 'TestPortfolio',
+            'portfolio': 'Existing Portfolio',
             'filters': False
         }
         self.investor.logger = TestLogger()
@@ -218,7 +221,8 @@ class TestInvestorFlow(unittest.TestCase):
 
     def test_portfolios(self):
         portfolios = self.investor.get_portfolio_list()
-        self.assertNotEquals(len(portfolios), 0)
+        self.assertEquals(len(portfolios), 2)
+        self.assertEquals(portfolios[0], 'Existing Portfolio')
 
     def test_investment_option(self):
         """ Match settings to investment options -- closest match should be 18.66 """
@@ -269,28 +273,56 @@ class TestInvestorFlow(unittest.TestCase):
         self.assertEqual(orderID, 123)
         self.assertEqual(loanID, 345)
 
-    def test_assign_to_porfolio(self):
-        """ Standard assign to portfolio with order and loan IDs """
-        ret = self.investor.assign_to_portfolio(123, 456)
-        self.assertTrue(ret)
+    def test_assign_to_porfolio_existing(self):
+        """ Assign to an existing portfolio """
 
-        # Should have info, no errors or warnings
-        self.assertEqual(len(self.investor.logger.infos), 1)
+        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456, returnJson=True)
+        self.assertEqual(ret['result'], 'success')
+        self.assertEqual(ret['portfolioName'], 'Existing Portfolio')  # hard coded in the JSON response
+
+        # Should have no errors or warnings
         self.assertEqual(len(self.investor.logger.errors), 0)
         self.assertEqual(len(self.investor.logger.warnings), 0)
 
+    def test_assign_to_porfolio_new(self):
+        """ Assign to a new portfolio """
+
+        self.investor.settings['portfolio'] = 'New Porfolio'
+        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456, returnJson=True)
+        self.assertEqual(ret['result'], 'success')
+        self.assertEqual(ret['portfolioName'], 'New Portfolio')  # hard coded in the JSON response
+
+        # Should have no errors or warnings
+        self.assertEqual(len(self.investor.logger.errors), 0)
+        self.assertEqual(len(self.investor.logger.warnings), 0)
+
+    def test_assign_to_porfolio_incorrect_assignment(self):
+        """ Test warning if order is assigned to the wrong portfolio.
+        The server responds with JSON containing the portfolio name your order was assigned to.
+        There's no reason to think these would be difference, but if they are, assign_to_portfolio
+        should still return True, but add a warning to the log. (easy to test, since the mock
+        server returns hard coded JSON) """
+
+        self.investor.settings['portfolio'] = 'A Folio' # server will respond with 'New Portfolio'
+        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456)
+        self.assertTrue(ret)
+
+        # Should have 1 warnings and 0 errors
+        self.assertEqual(len(self.investor.logger.warnings), 1)
+        self.assertEqual(len(self.investor.logger.errors), 0)
+
     def test_assign_to_porfolio_no_order(self):
         """ Assigning to portfolio without an order ID """
-        ret = self.investor.assign_to_portfolio(0, 456)
+        ret = self.investor.assign_to_portfolio(loanID=456)
         self.assertFalse(ret)
 
     def test_assign_to_porfolio_no_loan(self):
         """ Assigning to portfolio without a loan ID """
-        ret = self.investor.assign_to_portfolio(123, 0)
+        ret = self.investor.assign_to_portfolio(orderID=123)
         self.assertFalse(ret)
 
     def test_assign_to_porfolio_no_portfolio(self):
-        """ If not assigning to portfolio, it should still return true """
+        """ Test if not assigning to porfolio assign_to_portfolio() should return True """
         self.investor.settings['portfolio'] = False
         ret = self.investor.assign_to_portfolio(123, 456)
         self.assertTrue(ret)
@@ -301,7 +333,7 @@ class TestInvestorFlow(unittest.TestCase):
         self.assertEqual(len(self.investor.logger.warnings), 0)
 
     def test_attempt_to_invest(self):
-        """ Test end-to-end investment """
+        """ test_attempt_to_invest() - Test end-to-end investment """
         ret = self.investor.attempt_to_invest()
         self.assertTrue(ret)
 
