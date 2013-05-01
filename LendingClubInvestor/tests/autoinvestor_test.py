@@ -1,15 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import sys
 import os
 import unittest
 import subprocess
 import urllib
-import requests
+import traceback
 from time import sleep
 
 sys.path.insert(0, '.')
 sys.path.insert(0, '../')
+sys.path.insert(0, '../../')
+import LendingClubInvestor
 from LendingClubInvestor import AutoInvestor
 
 
@@ -192,23 +194,33 @@ class TestInvestorFlow(unittest.TestCase):
         if os.path.exists(self.investor.settings_file):
             os.remove(self.investor.settings_file)
 
-    def set_filters(self):
-        """ Add filters to the investor settings """
+    def set_default_filters(self):
+        """ Sets all the filters to default valeus (True) """
         self.investor.settings['filters'] = {
             'exclude_existing': True,
-            '36month': False,
-            '60month': True,
+            'term36month': True,
+            'term60month': True,
             'grades': {
-                'All': False,
+                'All': True,
                 'A': True,
                 'B': True,
                 'C': True,
-                'D': False,
-                'E': False,
-                'F': False,
-                'G': False
+                'D': True,
+                'E': True,
+                'F': True,
+                'G': True
             }
         }
+
+    def set_filters(self):
+        """ Add advanced filtering to the investor settings """
+        self.set_default_filters()
+        self.investor.settings['filters']['term36month'] = False
+        self.investor.settings['filters']['grades']['All'] = False
+        self.investor.settings['filters']['grades']['D'] = False
+        self.investor.settings['filters']['grades']['E'] = False
+        self.investor.settings['filters']['grades']['F'] = False
+        self.investor.settings['filters']['grades']['G'] = False
 
     def test_login(self):
         self.assertTrue(self.investor.authenticate())
@@ -271,12 +283,16 @@ class TestInvestorFlow(unittest.TestCase):
         The server should raise an error for invalid JSON"""
 
         # Create a request with bad JSON
-        self.investor.prepare_filter_json = lambda: '{invalid json feed,,}'
+        formerFilterFunc = LendingClubInvestor.get_filter_json
+        LendingClubInvestor.get_filter_json = lambda settings: '{invalid json feed,,}'
         match = self.investor.get_investment_option(200)
 
         # Check for error
         self.assertFalse(match)
         self.assertEqual(len(self.investor.logger.errors), 1)
+
+        # Reset
+        LendingClubInvestor.get_filter_json = formerFilterFunc
 
     def test_investment_option_filters_within_percent(self):
         """ Investment Options within percent settings.
@@ -290,6 +306,34 @@ class TestInvestorFlow(unittest.TestCase):
         match = self.investor.get_investment_option(200)
         self.assertEqual(match['percentage'], 14.5)  # should be a perfect match
 
+    def test_investment_option_validate(self):
+        """ test_investment_option_validate
+        Test validating an option against advanced filters """
+        match = self.investor.get_investment_option(200)
+
+        # Initial match should be True
+        self.assertEqual(match['percentage'], 18.66)
+        self.assertTrue(self.investor.validate_option(match))
+
+        # Set C to False, everything else true
+        self.set_default_filters()
+        self.assertTrue(self.investor.validate_option(match))  # defaults should be True
+        self.investor.settings['filters']['grades']['All'] = False
+        self.investor.settings['filters']['grades']['C'] = False
+        self.assertFalse(self.investor.validate_option(match))  # False
+
+        # Set 36 month to False, everything else true
+        self.set_default_filters()
+        self.assertTrue(self.investor.validate_option(match))  # defaults should be True
+        self.investor.settings['filters']['term36month'] = False
+        self.assertFalse(self.investor.validate_option(match))  # False
+
+        # Set 60 month to False, everything else true
+        self.set_default_filters()
+        self.assertTrue(self.investor.validate_option(match))  # defaults should be True
+        self.investor.settings['filters']['term60month'] = False
+        self.assertFalse(self.investor.validate_option(match))  # False
+
     def test_prepare_order(self):
         investmentOption = self.investor.get_investment_option(200)
         strutToken = self.investor.prepare_investment_order(200, investmentOption)
@@ -297,14 +341,14 @@ class TestInvestorFlow(unittest.TestCase):
 
     def test_place_order(self):
         investmentOption = self.investor.get_investment_option(200)
-        (orderID, loanID) = self.investor.place_order('abc123', 200, investmentOption)
+        (orderID, loanIDs) = self.investor.place_order('abc123', 200, investmentOption)
         self.assertEqual(orderID, 123)
-        self.assertEqual(loanID, 345)
+        self.assertEqual(loanIDs, [345])
 
     def test_assign_to_porfolio_existing(self):
         """ Assign to an existing portfolio """
 
-        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456, returnJson=True)
+        ret = self.investor.assign_to_portfolio(orderID=123, loanIDs=[456], returnJson=True)
         self.assertEqual(ret['result'], 'success')
         self.assertEqual(ret['portfolioName'], 'Existing Portfolio')  # hard coded in the JSON response
 
@@ -316,7 +360,7 @@ class TestInvestorFlow(unittest.TestCase):
         """ Assign to a new portfolio """
 
         self.investor.settings['portfolio'] = 'New Porfolio'
-        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456, returnJson=True)
+        ret = self.investor.assign_to_portfolio(orderID=123, loanIDs=[456], returnJson=True)
         self.assertEqual(ret['result'], 'success')
         self.assertEqual(ret['portfolioName'], 'New Portfolio')  # hard coded in the JSON response
 
@@ -332,7 +376,7 @@ class TestInvestorFlow(unittest.TestCase):
         server returns hard coded JSON) """
 
         self.investor.settings['portfolio'] = 'A Folio'  # server will respond with 'New Portfolio'
-        ret = self.investor.assign_to_portfolio(orderID=123, loanID=456)
+        ret = self.investor.assign_to_portfolio(orderID=123, loanIDs=[456])
         self.assertTrue(ret)
 
         # Should have 1 warnings and 0 errors
@@ -341,7 +385,7 @@ class TestInvestorFlow(unittest.TestCase):
 
     def test_assign_to_porfolio_no_order(self):
         """ Assigning to portfolio without an order ID """
-        ret = self.investor.assign_to_portfolio(loanID=456)
+        ret = self.investor.assign_to_portfolio(loanIDs=[456])
         self.assertFalse(ret)
 
     def test_assign_to_porfolio_no_loan(self):
@@ -352,7 +396,7 @@ class TestInvestorFlow(unittest.TestCase):
     def test_assign_to_porfolio_no_portfolio(self):
         """ Test if not assigning to porfolio assign_to_portfolio() should return True """
         self.investor.settings['portfolio'] = False
-        ret = self.investor.assign_to_portfolio(123, 456)
+        ret = self.investor.assign_to_portfolio(orderID=123, loanIDs=[456])
         self.assertTrue(ret)
 
         # Should be no errors or info
@@ -420,8 +464,12 @@ class TestLogger():
         self.infos.append(msg)
 
     def error(self, msg):
-        print '\nINVESTOR ERROR: {0}\n'.format(msg)
         self.errors.append(msg)
+        print '\nINVESTOR ERROR: {0}'.format(msg)
+
+        # Traceback
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, limit=2, file=sys.stdout)
 
     def warning(self, msg):
         print '\nINVESTOR WARNING: {0}\n'.format(msg)

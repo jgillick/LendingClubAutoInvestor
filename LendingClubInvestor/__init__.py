@@ -24,14 +24,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import sys
 import os
 import re
 import logging
 import getpass
 import requests
 import json
+import traceback
 from time import sleep
 from bs4 import BeautifulSoup
+from util import *
 
 
 class AutoInvestor:
@@ -338,11 +341,12 @@ class AutoInvestor:
 
     def prepare_filter_json(self):
         """
+        DEPRECATED. Use util.get_filter_json()
         Convert the filter dictionary into the JSON that LendingClub expects
         """
 
         # Start with JSON from LendingClub that has all options
-        baseJson = json.loads('[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%</span>","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%</span>","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%</span>","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%</span>","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%</span>","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%</span>","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%</span>","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D 18.76%</span>","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A 7.41%</span>","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E 21.49%</span>","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B 12.12%</span>","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F 23.49%</span>","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C 15.80%</span>","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G 24.84%</span>","sqlValue":null,"valueIndex":7}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]')
+        baseJson = json.loads('[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D</span> 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E</span> 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F</span> 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G</span> 24.84%","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D</span> 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E</span> 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F</span> 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G</span> 24.84%","sqlValue":null,"valueIndex":7}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]')
         sendJson = list(baseJson)
 
         # No filters set
@@ -350,20 +354,25 @@ class AutoInvestor:
             return False
 
         # Walk through the JSON that has ALL settings and remove the ones we've marked as False
-        i = 0
-        for field in baseJson:
+        for i, field in enumerate(sendJson):
             fieldId = field['m_id']
+
+            # Replace m_value with m_controlValues
+            if type(field['m_metadata']['m_controlValues']) is list:
+                field['m_value'] = list(field['m_metadata']['m_controlValues'])
+
             fieldValues = field['m_value']
 
             # Term (36 - 60 month)
             if fieldId == 39:
+
                 v = 0
                 while(v < len(fieldValues)):
                     value = fieldValues[v]
-                    if value['value'] == 'Year3' and not self.settings['filters']['36month']:
-                        del sendJson[i]['m_value'][v]
-                    elif value['value'] == 'Year5' and not self.settings['filters']['60month']:
-                        del sendJson[i]['m_value'][v]
+                    if value['value'] == 'Year3' and not self.settings['filters']['term36month']:
+                        del fieldValues[v]
+                    elif value['value'] == 'Year5' and not self.settings['filters']['term60month']:
+                        del fieldValues[v]
 
                     # Only increment if nothing was removed (removing changes the index)
                     else:
@@ -372,9 +381,9 @@ class AutoInvestor:
             # Exclude Loans already invested in
             elif fieldId == 38:
                 if not self.settings['filters']['exclude_existing']:
-                    del sendJson[i]['m_value'][0]
+                    del fieldValues[0]
 
-            # Interest rates
+            # Interest rate grades
             elif fieldId == 10:
 
                 v = 0
@@ -385,15 +394,77 @@ class AutoInvestor:
                     # Match the All, A - G to the Grade filters, if False, remove
                     # if All is True, remove everything but the All field
                     if self.settings['filters']['grades'][valName] is False or (self.settings['filters']['grades']['All'] is True and valName != 'All'):
-                        del sendJson[i]['m_value'][v]
+                        del fieldValues[v]
+                        v -= 1
 
-                    # Only increment if nothing was removed (removing changes the index)
-                    else:
-                        v += 1
-            i += 1
+                    # Increment
+                    v += 1
 
         sendJson = json.dumps(sendJson)
+        #sendJson = sendJson.replace('"', '\\"')
+        print sendJson
+        #return '[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D</span> 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E</span> 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F</span> 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G</span> 24.84%","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]'
         return sendJson
+
+    def browse_notes(self):
+        """
+        Sends the filters to the Browse Notes API and returns a JSON of the notes found
+        """
+        try:
+
+            # Get all investment options
+            filters = get_filter_json(self.settings['filters'])
+            print 'Filter!\n', filters
+            if filters is False:
+                filters = 'default'
+            payload = {
+                'method': 'search',
+                'filter': filters
+                #'filter': '[{"m_id":39,"m_metadata":{"m_controlValues":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Term (36 - 60 month)","id":39,"m_onHoverHelp":"Select the loan maturities you are interested to invest in","m_className":"classname","m_defaultValue":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}]},"m_value":[{"value":"Year3","label":"36-month","sqlValue":null,"valueIndex":0},{"value":"Year5","label":"60-month","sqlValue":null,"valueIndex":1}],"m_visible":false,"m_position":0},{"m_id":38,"m_metadata":{"m_controlValues":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_type":"SVAL","m_rep":"CHKBOX","m_label":"Exclude Loans already invested in","id":38,"m_onHoverHelp":"Use this filter to exclude loans from a borrower that you have already invested in.","m_className":"classname","m_defaultValue":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":true,"label":"Exclude loans invested in","sqlValue":null,"valueIndex":0}],"m_visible":false,"m_position":0},{"m_id":10,"m_metadata":{"m_controlValues":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0},{"value":"D","label":"<span class=\\"grades d-loan-grade\\">D</span> 18.76%","sqlValue":null,"valueIndex":1},{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"E","label":"<span class=\\"grades e-loan-grade\\">E</span> 21.49%","sqlValue":null,"valueIndex":3},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"F","label":"<span class=\\"grades f-loan-grade\\">F</span> 23.49%","sqlValue":null,"valueIndex":5},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6},{"value":"G","label":"<span class=\\"grades g-loan-grade\\">G</span> 24.84%","sqlValue":null,"valueIndex":7}],"m_type":"MVAL","m_rep":"CHKBOX","m_label":"Interest Rate","id":10,"m_onHoverHelp":"Specify the interest rate ranges of the notes  you are willing to invest in.","m_className":"short","m_defaultValue":[{"value":"All","label":"All","sqlValue":null,"valueIndex":0}]},"m_value":[{"value":"A","label":"<span class=\\"grades a-loan-grade\\">A</span> 7.41%","sqlValue":null,"valueIndex":2},{"value":"B","label":"<span class=\\"grades b-loan-grade\\">B</span> 12.12%","sqlValue":null,"valueIndex":4},{"value":"C","label":"<span class=\\"grades c-loan-grade\\">C</span> 15.80%","sqlValue":null,"valueIndex":6}],"m_visible":false,"m_position":0},{"m_id":37,"m_metadata":{"m_controlValues":null,"m_type":"SVAL","m_rep":"TEXTBOX","m_label":"Keyword","id":37,"m_onHoverHelp":"Type any keyword","m_className":"classname","m_defaultValue":[]},"m_value":null,"m_visible":false,"m_position":0}]'
+            }
+            response = self.post_url('/browse/browseNotesAj.action', data=payload)
+            jsonRes = response.json()
+            return jsonRes
+
+        except Exception as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=10, file=sys.stdout)
+            self.logger.error(str(e))
+            return False
+
+    def validate_option(self, option):
+        """
+        Validate a chosen investment option by the advanced filters
+        """
+        ok = True
+        filters = self.settings['filters']
+
+        # No advanced filters
+        if filters is False:
+            return True
+
+        # Check grades
+        if filters['grades']['All'] is not True:
+            for grade in filters['grades']:
+                value = filters['grades'][grade]
+                grade = grade.lower()
+
+                # Has notes in a grade that should be excluded
+                if value is False and grade in option and option[grade] > 0:
+                    ok = False
+                    break
+
+        # Check terms
+        if filters['term36month'] is False and 'percent_of_year3_loans' in option and option['percent_of_year3_loans'] > 0:
+            ok = False
+        if filters['term60month'] is False and 'percent_of_year5_loans' in option and option['percent_of_year5_loans'] > 0:
+            ok = False
+
+        # Did not pass!
+        if not ok:
+            self.logger.error('The investment options found did not match your term or grade requirements. It seems like the advanced filtering code might be broken! Either fix the code or stop using the advanced filters.')
+
+        return ok
 
     def get_investment_option(self, cash):
         """
@@ -409,7 +480,7 @@ class AutoInvestor:
             minPercent = self.settings['minPercent']
 
             # Get all investment options
-            filters = self.prepare_filter_json()
+            filters = get_filter_json(self.settings['filters'])
             if filters is False:
                 filters = 'default'
             payload = {
@@ -525,7 +596,7 @@ class AutoInvestor:
         """
 
         orderID = 0
-        loanID = 0
+        loanIDs = []
 
         # Process order confirmation page
         try:
@@ -545,9 +616,9 @@ class AutoInvestor:
                 orderID = int(orderField['value'])
 
             # Load ID
-            loanField = soup.find('td', {'class': 'loan_id'})
-            if loanField:
-                loanID = int(loanField.text)
+            loanTags = soup.find_all('td', {'class': 'loan_id'})
+            for tag in loanTags:
+                loanIDs.append(int(tag.text))
 
             # Print status message
             if orderID == 0:
@@ -561,9 +632,9 @@ class AutoInvestor:
         except Exception as e:
             self.logger.error('Could not get your order number or loan ID from the order confirmation. Err Message: {0}'.format(str(e)))
 
-        return (orderID, loanID)
+        return (orderID, loanIDs)
 
-    def assign_to_portfolio(self, orderID=0, loanID=0, returnJson=False):
+    def assign_to_portfolio(self, orderID=0, loanIDs=[], returnJson=False):
         """
         Assign an order to a the portfolio named in the settings dictionary.
         If returnJson is true, this method will return the JSON from the server instead of True/False (this is primarily for unit testing)
@@ -575,12 +646,14 @@ class AutoInvestor:
             if not self.settings['portfolio']:
                 return True
 
-            if loanID != 0 and orderID != 0:
+            if len(loanIDs) != 0 and orderID != 0:
+
                 # Data
+                orderIDs = [orderID]*len(loanIDs)  # 1 order ID per record
                 postData = {
-                    'loan_id': str(loanID),
-                    'record_id': str(loanID),
-                    'order_id': str(orderID)
+                    'loan_id': loanIDs,
+                    'record_id': loanIDs,
+                    'order_id': orderIDs
                 }
                 paramData = {
                     'method': 'addToLCPortfolio',
@@ -674,16 +747,16 @@ class AutoInvestor:
                     option = self.get_investment_option(cash)
 
                     # Submit investment
-                    if option:
+                    if option and self.validate_option(option):
                         self.logger.info('Auto investing your available cash (${0}) at {1}%...'.format(cash, option['percentage']))
                         sleep(5)  # last chance to cancel
 
                         # Prepare the investment and place the order
                         strutToken = self.prepare_investment_order(cash, option)
                         if strutToken:
-                            (orderID, loanID) = self.place_order(strutToken, cash, option)
-                            if orderID > 0 and loanID > 0:
-                                self.assign_to_portfolio(orderID, loanID)
+                            (orderID, loanIDs) = self.place_order(strutToken, cash, option)
+                            if orderID > 0 and len(loanIDs) > 0:
+                                self.assign_to_portfolio(orderID, loanIDs)
                                 self.logger.info('Done\n')
                                 return True
 
@@ -858,9 +931,9 @@ class AutoInvestor:
 
             # Loan term
             terms = []
-            if self.settings['filters']['36month']:
+            if 'term36month' in self.settings['filters'] and self.settings['filters']['term36month']:
                 terms.append('36')
-            if self.settings['filters']['60month']:
+            if 'term60month' in self.settings['filters'] and self.settings['filters']['term60month']:
                 terms.append('60')
             print '  + Term: {0} months'.format(' & '.join(terms))
 
@@ -946,8 +1019,8 @@ class AutoInvestor:
         if not filters:
             filters = {
                 'exclude_existing': True,
-                '36month': True,
-                '60month': True,
+                'term36month': True,
+                'term60month': True,
                 'grades': {
                     'All': True,
                     'A': True,
@@ -968,11 +1041,11 @@ class AutoInvestor:
         print 'Choose term (36 - 60 month)'
 
         while(True):
-            filters['36month'] = self.prompt_yn('Include 36 month term loans?', filters['36month'])
-            filters['60month'] = self.prompt_yn('Include 60 month term loans?', filters['60month'])
+            filters['term36month'] = self.prompt_yn('Include 36 month term loans?', filters['term36month'])
+            filters['term60month'] = self.prompt_yn('Include 60 month term loans?', filters['term60month'])
 
             # Validate 1 was chosen
-            if not filters['36month'] and not filters['60month']:
+            if not filters['term36month'] and not filters['term60month']:
                 print 'You have to AT LEAST choose one term length!'
             else:
                 break
