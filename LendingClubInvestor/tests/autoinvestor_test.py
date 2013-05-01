@@ -5,6 +5,7 @@ import os
 import unittest
 import subprocess
 import urllib
+import requests
 from time import sleep
 
 sys.path.insert(0, '.')
@@ -250,6 +251,33 @@ class TestInvestorFlow(unittest.TestCase):
         match = self.investor.get_investment_option(200)
         self.assertFalse(match)
 
+    def test_investment_option_filters_break_server_grades(self):
+        """ test_investment_option_filters_break_server_grades
+        Test the server logic for checking grades.
+        The server is expecting A,B,C and should raise an error if it sees anything else"""
+
+        self.set_filters()
+        self.investor.settings['filters']['grades']['All'] = True
+        self.investor.settings['filters']['grades']['G'] = True
+        match = self.investor.get_investment_option(200)
+
+        # Check for error
+        self.assertFalse(match)
+        self.assertEqual(len(self.investor.logger.errors), 1)
+
+    def test_investment_option_filters_break_server_json(self):
+        """ test_investment_option_filters_break_server_json
+        Test the server logic for parsing the JSON feed.
+        The server should raise an error for invalid JSON"""
+
+        # Create a request with bad JSON
+        self.investor.prepare_filter_json = lambda: '{invalid json feed,,}'
+        match = self.investor.get_investment_option(200)
+
+        # Check for error
+        self.assertFalse(match)
+        self.assertEqual(len(self.investor.logger.errors), 1)
+
     def test_investment_option_filters_within_percent(self):
         """ Investment Options within percent settings.
         Set min/max settings to be within options returned with filters """
@@ -303,7 +331,7 @@ class TestInvestorFlow(unittest.TestCase):
         should still return True, but add a warning to the log. (easy to test, since the mock
         server returns hard coded JSON) """
 
-        self.investor.settings['portfolio'] = 'A Folio' # server will respond with 'New Portfolio'
+        self.investor.settings['portfolio'] = 'A Folio'  # server will respond with 'New Portfolio'
         ret = self.investor.assign_to_portfolio(orderID=123, loanID=456)
         self.assertTrue(ret)
 

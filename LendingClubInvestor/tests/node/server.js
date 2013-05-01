@@ -66,6 +66,18 @@ function outputFileAndEnd(filename, response){
 }
 
 /**
+* Output JSON error message
+*/
+function outputErrorJSON(msg, response){
+  var error = {
+    'result': 'error',
+    'error': [ msg ]
+  };
+  response.write(JSON.stringify(error));
+  response.end();
+}
+
+/**
 * Process all GET requests
 */
 function processGET(request, response){
@@ -127,7 +139,45 @@ function processPOST(request, response, data){
       if(data.filter == 'default'){
         outputFileAndEnd('lendingMatchOptionsV2.json', response);
       } else{
-        outputFileAndEnd('lendingMatchOptionsV2_filter.json', response);
+        try {
+          // Verify valid JSON filter
+          var filters = JSON.parse(data.filter);
+          if(typeof filters == 'object'
+              && filters.length > 1
+              && typeof filters[0]['m_id'] != 'undefined'){
+
+            // Check Grade filters (only A, B and C should be selected, per autoinvestor_test.py)
+            var foundGrade = false;
+            for(var i = 0, len = filters.length; i < len; i++){
+              var filter = filters[i],
+                  values = filter['m_value'];
+
+              if (filter['m_id'] == 10){
+                foundGrade = true;
+
+                for(var g = 0, glen = values.length; g < glen; g++){
+                  var grade = values[g];
+
+                  // If something other than A, B or C are present, the filter JSON is wrong
+                  if (['A', 'B', 'C'].indexOf(grade['value']) < 0){
+                    throw 'Grade "'+ grade['value'] +'"" should not be present in the filter. Only A, B and C.';
+                  }
+                }
+
+              }
+            }
+            if (foundGrade == false){
+              throw 'No grade filters defined';
+            }
+
+            // Everything checked out, give them the results!
+            outputFileAndEnd('lendingMatchOptionsV2_filter.json', response);
+          } else {
+            outputErrorJSON('Invalid JSON filter: '+ data.filter, response);
+          }
+        } catch(e){
+          outputErrorJSON(e.toString(), response);
+        }
       }
     break;
 
