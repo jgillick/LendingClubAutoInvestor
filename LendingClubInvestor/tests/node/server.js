@@ -85,6 +85,16 @@ function processGET(request, response){
       query = url.parse(request.url, true).query;
 
   switch(path){
+
+    // Echo what was sent
+    case '/echo':
+      response.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+      response.write(JSON.stringify(query));
+      response.end();
+    break;
+
     // Cash balance JSON
     case '/browse/cashBalanceAj.action':
       outputFileAndEnd('cashBalanceAj.json', response);
@@ -121,6 +131,15 @@ function processPOST(request, response, data){
   var path = url.parse(request.url).pathname,
       query = url.parse(request.url, true).query;
   switch(path){
+
+    // Echo what was sent
+    case '/echo':
+      response.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+      response.write(JSON.stringify(data));
+      response.end();
+    break;
 
     // Login - if the email and password match, set the cookie
     case '/account/login.action':
