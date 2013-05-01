@@ -304,12 +304,17 @@ class AutoInvestor:
             else:
                 return int(response)
 
-    def prompt_yn(self, msg, default=False):
+    def prompt_yn(self, msg, default=None):
         """
         Prompts the user for a y/n response.
         default param should be either 'y' or 'n'
         Returns True if 'Y' and False if 'N'
         """
+        if default is True:
+            default = 'y'
+        elif default is False:
+            default = 'n'
+
         if default == 'y' or default is True:
             msg = "{0} [Y/n]: ".format(msg)
         elif default == 'n':
@@ -442,6 +447,7 @@ class AutoInvestor:
                 # option that was under the maximum percent
                 return lastOption
             else:
+                self.logger.error('Could not get investment portfolio options! Server responded with: {0}'.format(response.text))
                 return False
 
         except Exception as e:
