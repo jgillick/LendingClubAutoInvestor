@@ -224,6 +224,15 @@ class AutoInvestor:
                     if key in savedSettings:
                         self.settings[key] = savedSettings[key]
 
+                # Migrations
+                if '36month' in self.settings['filters']:
+                    self.settings['filters']['term36month'] = self.settings['filters']['36month']
+                    del self.settings['filters']['36month']
+
+                if '60month' in self.settings['filters']:
+                    self.settings['filters']['term60month'] = self.settings['filters']['60month']
+                    del self.settings['filters']['60month']
+
             except Exception as e:
                 self.logger.debug('Could not read settings file: {0}'.format(str(e)))
         else:
