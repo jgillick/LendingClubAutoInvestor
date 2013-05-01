@@ -14,11 +14,11 @@ From the test directory, run this command:
 
     python ./test_investor.py
 
-It will take between 13 - 25 seconds to run. 
+It will take between 13 - 25 seconds to run.
 
 Interpreting results
 --------------------
-Any test failure will be reported at the end of the output and will start with `FAIL:` and followed by a message and traceback. 
+Any test failure will be reported at the end of the output and will start with `FAIL:` and followed by a message and traceback.
 
 If no failures were found, the test script will end with the text `OK`.
 
@@ -43,7 +43,7 @@ If this is the case, manually search for the server and kill it using `ps` and `
 
     $ ps -A | grep node
     28393 ttys007    0:00.08 node node/server.js
-    
+
     $ kill 28393
 
 
