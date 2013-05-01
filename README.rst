@@ -49,7 +49,7 @@ Find the latest version on github: https://github.com/jgillick/LendingClubAutoIn
 Feel free to fork and contribute!
 
 Requirements
-~~~~~~~~~~~~
+------------
 
  * python-daemon
  * requests
