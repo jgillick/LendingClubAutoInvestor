@@ -41,6 +41,12 @@ Through easy-to-use command prompts, you can set the minimum cash to
 invest and the min/max *average* interest rate portfolio you want to
 invest in.
 
+Source
+------
+
+Find the latest version on github: https://github.com/jgillick/LendingClubAutoInvestor
+
+Feel free to fork and contribute!
 
 Requirements
 ~~~~~~~~~~~~
@@ -56,6 +62,7 @@ These can automatically be installed with `pip <http://www.pip-installer.org/en/
 ::
 
     sudo pip install python-daemon requests beautifulsoup4 html5lib argparse
+
 
 Install
 -------
