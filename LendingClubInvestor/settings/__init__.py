@@ -64,10 +64,12 @@ class Settings():
 
     def __getitem__(self, arg):
         """
-        Attempts to get the setting or auth keys
+        Attempts to a value from one of the dictionaries
         """
         if arg in self.investing:
             return self.investing[arg]
+        if arg in self.user_settings:
+            return self.user_settings[arg]
         if arg in self.auth:
             return self.auth[arg]
         return None

@@ -115,12 +115,12 @@ class AutoInvestor:
                 self.settings.get_investment_settings()
 
             # All ready to start running
-            print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every 30 minutes and invested if enough funds are available.\n'
+            print '\nThat\'s all we need. Now, as long as this is running, your account will be checked every {0} minutes and invested if enough funds are available.\n'.format(self.settings['frequency'])
 
     def run(self):
         """
-        Start the auto investor loop which will check the LendingClub account every 30 minutes for
-        funds to invest
+        Start the auto investor loop which will regularly check the LendingClub account for funds to invest.
+        The frequency is defined by the 'frequency' value in the ~/.lcinvestor/settings.yaml file
         """
         self.investment_loop()
 
@@ -546,11 +546,11 @@ class AutoInvestor:
                                 return True
 
                         # If we haven't returned by now, there must have been an error
-                        self.logger.error('Errors occurred. Will try again in 30 minutes\n')
+                        self.logger.error('Errors occurred. Will try again in {0} minutes\n'.format(self.settings['frequency']))
                         return False
 
                     else:
-                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
+                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in {2} minutes'.format(self.settings['minPercent'], self.settings['maxPercent'], self.settings['frequency']))
                 else:
                     self.logger.info('Only ${0} available'.format(allCash))
                     return False
@@ -562,7 +562,7 @@ class AutoInvestor:
 
     def investment_loop(self):
         """
-        Invest cash every 30 minutes
+        Check the account every so often (default is every 60 minutes)
         """
         while(True):
             self.attempt_to_invest()
