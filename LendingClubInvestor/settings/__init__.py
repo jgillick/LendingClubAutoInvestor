@@ -92,7 +92,7 @@ class Settings():
         self.user_settings = yaml.load(open(file_path).read())
         return self.user_settings
 
-    def save_investment_settings(self):
+    def save(self):
         """
         Save the investment settings dict to a file
         """
@@ -268,7 +268,7 @@ class Settings():
         # Review summary
         self.show_summary()
         if util.prompt_yn('Would you like to continue with these settings?', 'y'):
-            self.save_investment_settings()
+            self.save()
         else:
             self.get_investment_settings()
 

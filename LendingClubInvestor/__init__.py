@@ -106,7 +106,10 @@ class AutoInvestor:
             # Use the settings from last time
             if self.settings.investing['minPercent'] is not False and self.settings.investing['maxPercent'] is not False:
                 self.settings.show_summary('Prior Settings')
-                if not util.prompt_yn('Would you like to use these settings from last time?', 'y'):
+
+                if util.prompt_yn('Would you like to use these settings from last time?', 'y'):
+                    self.settings.save()  # to save the email that was just entered
+                else:
                     self.settings.get_investment_settings()
             else:
                 self.settings.get_investment_settings()
