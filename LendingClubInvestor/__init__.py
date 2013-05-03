@@ -152,7 +152,7 @@ class AutoInvestor:
         sendJson = list(baseJson)
 
         # No filters set
-        if not self.investing['filters']:
+        if not self.settings['filters']:
             return False
 
         # Walk through the JSON that has ALL settings and remove the ones we've marked as False
@@ -171,9 +171,9 @@ class AutoInvestor:
                 v = 0
                 while(v < len(fieldValues)):
                     value = fieldValues[v]
-                    if value['value'] == 'Year3' and not self.investing['filters']['term36month']:
+                    if value['value'] == 'Year3' and not self.settings['filters']['term36month']:
                         del fieldValues[v]
-                    elif value['value'] == 'Year5' and not self.investing['filters']['term60month']:
+                    elif value['value'] == 'Year5' and not self.settings['filters']['term60month']:
                         del fieldValues[v]
 
                     # Only increment if nothing was removed (removing changes the index)
@@ -182,7 +182,7 @@ class AutoInvestor:
 
             # Exclude Loans already invested in
             elif fieldId == 38:
-                if not self.investing['filters']['exclude_existing']:
+                if not self.settings['filters']['exclude_existing']:
                     del fieldValues[0]
 
             # Interest rate grades
@@ -195,7 +195,7 @@ class AutoInvestor:
 
                     # Match the All, A - G to the Grade filters, if False, remove
                     # if All is True, remove everything but the All field
-                    if self.investing['filters']['grades'][valName] is False or (self.investing['filters']['grades']['All'] is True and valName != 'All'):
+                    if self.settings['filters']['grades'][valName] is False or (self.settings['filters']['grades']['All'] is True and valName != 'All'):
                         del fieldValues[v]
                         v -= 1
 
@@ -215,7 +215,7 @@ class AutoInvestor:
         try:
 
             # Get all investment options
-            filters = util.get_filter_json(self.investing['filters'])
+            filters = util.get_filter_json(self.settings['filters'])
             print 'Filter!\n', filters
             if filters is False:
                 filters = 'default'
@@ -239,7 +239,7 @@ class AutoInvestor:
         Validate a chosen investment option by the advanced filters
         """
         ok = True
-        filters = self.investing['filters']
+        filters = self.settings['filters']
 
         # No advanced filters
         if filters is False:
@@ -278,11 +278,11 @@ class AutoInvestor:
         the one closest to max will be chosen.
         """
         try:
-            maxPercent = self.investing['maxPercent']
-            minPercent = self.investing['minPercent']
+            maxPercent = self.settings['maxPercent']
+            minPercent = self.settings['minPercent']
 
             # Get all investment options
-            filters = util.get_filter_json(self.investing['filters'])
+            filters = util.get_filter_json(self.settings['filters'])
             if filters is False:
                 filters = 'default'
             payload = {
@@ -446,7 +446,7 @@ class AutoInvestor:
         # Assign to portfolio
         resText = ''
         try:
-            if not self.investing['portfolio']:
+            if not self.settings['portfolio']:
                 return True
 
             if len(loanIDs) != 0 and orderID != 0:
@@ -460,12 +460,12 @@ class AutoInvestor:
                 }
                 paramData = {
                     'method': 'addToLCPortfolio',
-                    'lcportfolio_name': self.investing['portfolio']
+                    'lcportfolio_name': self.settings['portfolio']
                 }
 
                 # New portfolio
                 folioList = self.get_portfolio_list()
-                if self.investing['portfolio'] not in folioList:
+                if self.settings['portfolio'] not in folioList:
                     paramData['method'] = 'createLCPortfolio'
 
                 # Send
@@ -478,22 +478,22 @@ class AutoInvestor:
 
                 # Failed if the response is not 200 or JSON result is not success
                 if response.status_code != 200 or resJson['result'] != 'success':
-                    self.logger.error('Could not assign order #{0} to portfolio \'{1}: Server responded with {2}\''.format(str(orderID), self.investing['portfolio'], response.text))
+                    self.logger.error('Could not assign order #{0} to portfolio \'{1}: Server responded with {2}\''.format(str(orderID), self.settings['portfolio'], response.text))
 
                 # Success
                 else:
 
                     # Assigned to another portfolio, for some reason, raise warning
-                    if 'portfolioName' in resJson and resJson['portfolioName'] != self.investing['portfolio']:
-                        self.logger.warning('Added order #{0} to portfolio "{1}" - NOT - "{2}", and I don\'t know why'.format(str(orderID), resJson['portfolioName'], self.investing['portfolio']))
+                    if 'portfolioName' in resJson and resJson['portfolioName'] != self.settings['portfolio']:
+                        self.logger.warning('Added order #{0} to portfolio "{1}" - NOT - "{2}", and I don\'t know why'.format(str(orderID), resJson['portfolioName'], self.settings['portfolio']))
                     # Assigned to the correct portfolio
                     else:
-                        self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.investing['portfolio']))
+                        self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.settings['portfolio']))
 
                     return True
 
         except Exception as e:
-            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2} -- {3}'.format(orderID, self.investing['portfolio'], str(e), resText))
+            self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2} -- {3}'.format(orderID, self.settings['portfolio'], str(e), resText))
 
         return False
 
@@ -544,7 +544,7 @@ class AutoInvestor:
 
                 # Invest
                 self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
-                if cash >= self.investing['minCash']:
+                if cash >= self.settings['minCash']:
                     self.logger.info('Attempting to investing ${0}'.format(cash))
                     option = self.get_investment_option(cash)
 
@@ -567,7 +567,7 @@ class AutoInvestor:
                         return False
 
                     else:
-                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.investing['minPercent'], self.investing['maxPercent']))
+                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in 30 minutes'.format(self.settings['minPercent'], self.settings['maxPercent']))
                 else:
                     self.logger.info('Only ${0} available'.format(allCash))
                     return False
@@ -595,7 +595,7 @@ class AutoInvestor:
 
         payload = {
             'login_email': self.settings.auth['email'],
-            'login_password': self.settings.auth['password']
+            'login_password': self.settings.auth['pass']
         }
         response = util.post_url('/account/login.action', data=payload, useCookies=False)
 

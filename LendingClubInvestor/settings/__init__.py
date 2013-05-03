@@ -58,6 +58,16 @@ class Settings():
         self.get_user_settings()
         self.load_investment_settings_file()
 
+    def __getitem__(self, arg):
+        """
+        Attempts to get the setting or auth keys
+        """
+        if arg in self.investing:
+            return self.investing[arg]
+        if arg in self.auth:
+            return self.auth[arg]
+        return None
+
     def get_user_settings(self):
         """
         Load the settings.yaml file into memory.

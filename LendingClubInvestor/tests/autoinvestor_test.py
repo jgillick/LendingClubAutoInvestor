@@ -6,6 +6,7 @@ import unittest
 import subprocess
 import urllib
 import traceback
+import shutil
 from time import sleep
 
 sys.path.insert(0, '.')
@@ -199,7 +200,7 @@ class TestInvestorFlow(unittest.TestCase):
 
         # Delete settings file
         if os.path.exists(self.settings.settings_dir):
-            os.remove(self.settings.settings_dir)
+            shutil.rmtree(self.settings.settings_dir)
 
     def set_default_filters(self):
         """ Sets all the filters to default valeus (True) """
