@@ -1,0 +1,9 @@
+
+# How frequently the app will check your LendingClub
+# account for cash to invest. (in minutes)
+frequency: 60
+
+# OS X only
+# If set to Yes an OS X pop-up notification will briefly appear
+# when an investment has been submitted.
+alert: No

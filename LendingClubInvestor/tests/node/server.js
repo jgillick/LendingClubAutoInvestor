@@ -149,6 +149,11 @@ function processPOST(request, response, data){
           'Content-Type': 'text/plain'
         });
       }
+      else{
+        response.writeHead(501, {
+          'Content-Type': 'text/plain'
+        });
+      }
       response.write("Test Response");
       response.end();
     break;
