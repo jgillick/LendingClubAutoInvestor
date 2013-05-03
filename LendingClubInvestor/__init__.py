@@ -75,6 +75,14 @@ class AutoInvestor:
             self.settings = settings
         self.settings.investor = self  # create a link back to this instance
 
+    def version(self):
+        """
+        Return the version number of the Lending Club Investor tool
+        """
+        this_path = os.path.dirname(os.path.realpath(__file__))
+        version_file = os.path.join(this_path, 'VERSION')
+        return open(version_file).read()
+
     def setup(self):
         """
         Setup the investor to run

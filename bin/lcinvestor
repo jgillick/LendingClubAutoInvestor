@@ -67,11 +67,12 @@ if __name__ == '__main__':
 
     # Process command flags
     parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
     parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
     options = parser.parse_args()
 
-    options.action = options.__dict__['start/stop']
+    options.action = options.__dict__['start/stop/status']
     action = options.action[0] if (len(options.action) > 0) else None
     isVerbose = options.verbose
     isDaemon = (action is not None)
@@ -89,6 +90,11 @@ if __name__ == '__main__':
     # Start program
     try:
         investor = LendingClubInvestor.AutoInvestor(verbose=isVerbose)
+
+        # Print version number
+        if options.version:
+            print 'lcinvestor {0}'.format(investor.version())
+            exit(0)
 
         # Print daemon status and exit
         if action == 'status':
