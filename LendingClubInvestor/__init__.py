@@ -568,7 +568,8 @@ class AutoInvestor:
             self.attempt_to_invest()
 
             # Sleep for a time and then authenticate and move to the main loop
-            sleep(self.settings.user_settings['frequency'])
+            frequency = self.settings.user_settings['frequency'] * 60
+            sleep(frequency)
 
     def authenticate(self):
         """
