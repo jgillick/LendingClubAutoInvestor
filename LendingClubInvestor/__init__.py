@@ -42,56 +42,36 @@ class AutoInvestor:
     """
 
     authed = False
-    isDaemon = False
     verbose = False
-    loopDelay = 60 * 60  # 60 minutes in between loops
+    settings = None
 
-    homeDir = os.path.expanduser('~')
-    baseDir = os.path.dirname(os.path.realpath(__file__))
-    appDir = os.path.join(homeDir, '.lcinvestor')
-    logFile = os.path.join(appDir, 'daemon.log')
+    # The directory that files will be saved to (settings, cache, logs, etc)
+    # ~/.lcinvestor/
+    app_dir = os.path.join(os.path.expanduser('~'), '.lcinvestor')
 
-    settings_file = os.path.join(appDir, 'settings.yaml')
-    investing_file = os.path.join(appDir, 'investing.json')
 
-    # Defines the investment funding settings
-    password = False
-    investing = {
-        'email': False,
-        'minCash': 500,
-        'minPercent': False,
-        'maxPercent': False,
-        'portfolio': False,
-        'filters': False
-    }
-
-    settings = False
-
-    def __init__(self, settings=False, verbose=False, daemon=False):
-        self.isDaemon = daemon
+    def __init__(self, settings=False, verbose=False):
+        """
+        Create an AutoInvestor instance
+         - settings should be a Settings object that will manage getting
+           and saving all user and investment settings.
+         - Set verbose to True if you want to see debugging logs
+        """
         self.verbose = verbose
         self.logger = util.create_logger(verbose)
 
         # Setup user directory
-        if os.path.exists(self.appDir) and not os.path.isdir(self.appDir):
-            raise AutoInvestorError('The path \'{0}\' is not a directory.'.format(self.appDir))
-        elif not os.path.exists(self.appDir):
-            os.mkdir(self.appDir)
+        if os.path.exists(self.app_dir) and not os.path.isdir(self.app_dir):
+            raise AutoInvestorError('The path \'{0}\' is not a directory.'.format(self.app_dir))
+        elif not os.path.exists(self.app_dir):
+            os.mkdir(self.app_dir)
 
         # Create settings object
         if settings is False:
-            self.settings = Settings(self.appDir, self.logger)
+            self.settings = Settings(self.app_dir, self.logger)
         else:
             self.settings = settings
         self.settings.investor = self  # create a link back to this instance
-
-        # Daemon settings
-        if daemon:
-            self.stdin_path = '/dev/null'
-            self.stdout_path = self.logFile
-            self.stderr_path = self.logFile
-            self.pidfile_path = '/tmp/investor.pid'
-            self.pidfile_timeout = 1
 
     def setup(self):
         """

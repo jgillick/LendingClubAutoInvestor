@@ -13,8 +13,8 @@ class Settings():
     Handles all the user and investment settings
     """
 
-    logger = False
-    investor = False
+    logger = None
+    investor = None
 
     # Files
     settings_dir = None  # The directory that holds all the settings files
@@ -43,6 +43,10 @@ class Settings():
     }
 
     def __init__(self, settings_dir=None, logger=False):
+        """
+        settings_dir is the directory that will be used to
+        save the user and investment settings files
+        """
         self.settings_dir = settings_dir
 
         # Create logger if none was passed in
@@ -343,8 +347,10 @@ class Settings():
         previous_folio is the name of the last portfolio selected
         """
 
-        print '\nPortfolios...'
+        if not self.investor:
+            return False
 
+        print '\nPortfolios...'
         try:
             folios = self.investor.get_portfolio_list()
 
