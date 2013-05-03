@@ -28,6 +28,7 @@ import os
 import signal
 import sys
 import daemon
+from datetime import datetime
 from daemon import runner
 import argparse
 
@@ -38,6 +39,9 @@ if sys.argv[0][0:2] == './':
 
 import LendingClubInvestor
 
+investor = None
+pid_lockfilepath = '/tmp/lcinvestor.pid'
+
 
 def interupt_handler(signum, frame):
         """
@@ -47,12 +51,24 @@ def interupt_handler(signum, frame):
         exit(0)
 signal.signal(signal.SIGINT, interupt_handler)
 
+
+def is_daemon_running():
+    """
+    Check if the pid locked file status.
+    True if the daemon is believed to be running (based on the lockfile)
+    False if it is not.
+    """
+    lockfile = runner.make_pidlockfile(pid_lockfilepath, 1)
+    if lockfile.is_locked():
+        return True
+    return False
+
 if __name__ == '__main__':
 
     # Process command flags
     parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
-    parser.add_argument('start/stop', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon)')
+    parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
     options = parser.parse_args()
 
     options.action = options.__dict__['start/stop']
@@ -66,7 +82,7 @@ if __name__ == '__main__':
     if len(options.action) > 1:
         print 'Too many arguments!'
         exit(1)
-    if action is not None and action not in ['start', 'stop']:
+    if action is not None and action not in ['start', 'stop', 'status']:
         print '\'{0}\' is not a supported action!'.format(action)
         exit(1)
 
@@ -74,6 +90,24 @@ if __name__ == '__main__':
     try:
         investor = LendingClubInvestor.AutoInvestor(verbose=isVerbose)
 
+        # Print daemon status and exit
+        if action == 'status':
+            if is_daemon_running():
+                print 'The lcinvestor daemon is running'
+
+                # Print info on the last investment
+                last_investment = investor.get_last_investment()
+                if last_investment:
+                    timestamp = datetime.fromtimestamp(last_investment['timestamp'])
+
+                    print '\nLast investment:'
+                    print '${0} was invested at {1}'.format(last_investment['cash'], timestamp.strftime("%A %B %d, %Y at %I:%M%p"))
+                    print investor.get_option_summary(last_investment['investment'])
+            else:
+                print 'The lcinvestor daemon is not running'
+            exit(0)
+
+        # Start daemon
         if isDaemon:
 
             # Set daemon attributes
@@ -81,17 +115,18 @@ if __name__ == '__main__':
             investor.stdin_path = '/dev/null'
             investor.stdout_path = logfile_path
             investor.stderr_path = logfile_path
-            investor.pidfile_path = '/tmp/investor.pid'
+            investor.pidfile_path = pid_lockfilepath
             investor.pidfile_timeout = 1
 
             # Check if the pid locked file ststus
-            lockfile = runner.make_pidlockfile('/tmp/investor.pid', 1)
-            if isStarting and lockfile.is_locked():
-                print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
-                exit(1)
-            elif isStopping and not lockfile.is_locked():
-                print 'It doesn\'t look like there is an investor daemon running.'
-                exit(1)
+            if is_daemon_running():
+                if isStarting:
+                    print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
+                    exit(1)
+            else:
+                if isStopping:
+                    print 'It doesn\'t look like there is an investor daemon running.'
+                    exit(1)
 
             if isStarting:
                 investor.setup()
@@ -109,6 +144,8 @@ if __name__ == '__main__':
                 print 'Could not start daemon: {0}'.format(str(e))
             except daemon.runner.DaemonRunnerStopFailureError as e:
                 print 'Could not stop daemon: {0}'.format(str(e))
+
+        # Start in the foreground
         else:
             investor.setup()
             investor.run()

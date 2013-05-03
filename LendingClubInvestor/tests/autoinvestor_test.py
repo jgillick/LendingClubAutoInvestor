@@ -191,6 +191,7 @@ class TestInvestorFlow(unittest.TestCase):
             'filters': False
         }
         self.investor = AutoInvestor(settings=self.settings)
+        self.investor.app_dir = base_dir
         self.investor.logger = logger
 
     def tearDown(self):

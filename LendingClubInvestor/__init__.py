@@ -26,9 +26,9 @@ THE SOFTWARE.
 
 import sys
 import os
-import re
 import json
 import traceback
+import time
 from time import sleep
 from bs4 import BeautifulSoup
 from LendingClubInvestor import util
@@ -49,6 +49,8 @@ class AutoInvestor:
     # ~/.lcinvestor/
     app_dir = os.path.join(os.path.expanduser('~'), '.lcinvestor')
 
+    # The file that the summary from the last investment is saved to
+    last_investment_file = 'last_investment.json'
 
     def __init__(self, settings=False, verbose=False):
         """
@@ -423,7 +425,8 @@ class AutoInvestor:
     def assign_to_portfolio(self, orderID=0, loanIDs=[], returnJson=False):
         """
         Assign an order to a the portfolio named in the investing dictionary.
-        If returnJson is true, this method will return the JSON from the server instead of True/False (this is primarily for unit testing)
+        If returnJson is True, this method will return the JSON returned from the server (this is primarily for unit testing)
+        Otherwise it returns the name of the portfolio the order was assigned to or False
         """
 
         # Assign to portfolio
@@ -473,7 +476,7 @@ class AutoInvestor:
                     else:
                         self.logger.info('Added order #{0} to portfolio "{1}"'.format(str(orderID), self.settings['portfolio']))
 
-                    return True
+                    return resJson['portfolioName']
 
         except Exception as e:
             self.logger.error('Could not assign order #{0} to portfolio \'{1}\': {2} -- {3}'.format(orderID, self.settings['portfolio'], str(e), resText))
@@ -541,7 +544,8 @@ class AutoInvestor:
                         if strutToken:
                             (orderID, loanIDs) = self.place_order(strutToken, cash, option)
                             if orderID > 0 and len(loanIDs) > 0:
-                                self.assign_to_portfolio(orderID, loanIDs)
+                                assigned_to = self.assign_to_portfolio(orderID, loanIDs)
+                                self.save_last_investment(cash=cash, order=orderID, portfolio=assigned_to, investmentOption=option)
                                 self.logger.info('Done\n')
                                 return True
 
@@ -559,6 +563,52 @@ class AutoInvestor:
             self.logger.error(str(e))
 
         return False
+
+    def save_last_investment(self, cash, investmentOption, order=None, portfolio=None):
+        """"
+        Save a log of the last investment to the last_investment file
+        """
+        try:
+            last_invested = {
+                'timestamp': int(time.time()),
+                'orderID': order,
+                'portfolio': portfolio,
+                'cash': cash,
+                'investment': investmentOption
+            }
+
+            # Convert to JSON
+            json_out = json.dumps(last_invested)
+            self.logger.debug('Saving last investment file with JSON: {0}'.format(json_out))
+
+            # Save
+            file_path = os.path.join(self.app_dir, self.last_investment_file)
+            f = open(file_path, 'w')
+            f.write(json_out)
+            f.close()
+        except Exception as e:
+            self.logger.warning('Couldn\'t save the investment summary to file (this warning can be ignored). {0}'.format(str(e)))
+
+    def get_last_investment(self):
+        """
+        Return the last investment summary that has been saved to the last_investment file
+        """
+        try:
+            file_path = os.path.join(self.app_dir, self.last_investment_file)
+            if os.path.exists(file_path):
+
+                # Read file
+                f = open(file_path, 'r')
+                json_str = f.read()
+                f.close()
+
+                # Convert to dictionary and return
+                return json.loads(json_str)
+
+        except Exception as e:
+            self.logger.warning('Couldn\'t read the last investment file. {0}'.format(str(e)))
+
+        return None
 
     def investment_loop(self):
         """
