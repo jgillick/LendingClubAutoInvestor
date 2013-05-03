@@ -103,7 +103,7 @@ class Settings():
             # Convert to JSON (and add email)
             to_save = self.investing.copy()
             to_save['email'] = self.auth['email']
-            json_out = json.dumps(self.investing)
+            json_out = json.dumps(to_save)
 
             # Save
             self.logger.debug('Saving investment settings file: {0}'.format(json_out))
@@ -164,9 +164,8 @@ class Settings():
         """
         Get the email and password from the user
         """
-
         self.auth['email'] = util.prompt('LendingClub email', self.auth['email'])
-        self.auth['password'] = util.get_password()
+        self.auth['pass'] = util.get_password()
         return self.auth
 
     def show_summary(self, title='Summary'):
