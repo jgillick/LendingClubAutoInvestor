@@ -26,7 +26,7 @@ How it works
 ============
 
 When running it checks your account balances every 30 minutes, if the
-available cash meets or exceeds a `threshold you set <#minimum-cash>`__,
+available cash meets or exceeds a `threshold you set <#minimum-cash>`_,
 it's all automatically invested in a portfolio with an average interest
 rate within your `specified
 boundaries <#minmax-percent-interest-rate>`_.

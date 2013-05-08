@@ -4,7 +4,7 @@ setup(
     name='lcinvestor',
     version=open('LendingClubInvestor/VERSION').read(),
     author='Jeremy Gillick',
-    author_email='',
+    author_email='none@none.com',
     packages=['LendingClubInvestor', 'LendingClubInvestor.tests', 'LendingClubInvestor.settings'],
     package_data={
         'LendingClubInvestor': ['VERSION'],
