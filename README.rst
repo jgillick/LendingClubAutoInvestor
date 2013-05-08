@@ -29,7 +29,7 @@ When running it checks your account balances every 30 minutes, if the
 available cash meets or exceeds a `threshold you set <#minimum-cash>`__,
 it's all automatically invested in a portfolio with an average interest
 rate within your `specified
-boundaries <#minmax-percent-interest-rate>`__.
+boundaries <#minmax-percent-interest-rate>`_.
 
 To put it simply, the tool does the same thing as if you were to: \* Log
 into your account \* Click Invest \* Click More Options \* Select an
@@ -54,13 +54,13 @@ Feel free to fork and contribute!
 Requirements
 ============
 
- * python-daemon
- * requests
- * beautifulsoup4
- * html5lib
- * argparse
+* python-daemon
+* requests
+* beautifulsoup4
+* html5lib
+* argparse
 
-These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`__::
+These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`_::
 
     sudo pip install python-daemon requests beautifulsoup4 html5lib argparse
 
@@ -138,7 +138,7 @@ value will be chosen and all your available cash will be invested in it.
 
 This value relates to finding a investment portfolio using the slider on
 the `Invest
-page <https://www.lendingclub.com/portfolio/autoInvest.action>`__ on
+page <https://www.lendingclub.com/portfolio/autoInvest.action>`_ on
 LendingClub.com. It's not possible, at any given time, to define an
 absolute interest rate value, so we need to know the range that you will
 accept.
@@ -157,7 +157,7 @@ Advanced Filters
 ----------------
 
 **Experimental!** These are the filters from the `Invest
-page <https://www.lendingclub.com/portfolio/autoInvest.action>`__ on
+page <https://www.lendingclub.com/portfolio/autoInvest.action>`_ on
 LendingClub that will let you filter out investments by term length,
 loans you're already invested in and interest rate grades (A - G).
 
