@@ -539,6 +539,7 @@ class AutoInvestor:
                 # Invest
                 self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
                 if cash >= self.settings['minCash']:
+                    print " $ $ $ $ $ $ $ $ $ $"  # Create break in logs
                     self.logger.info('Attempting to investing ${0}'.format(cash))
                     option = self.get_investment_option(cash)
 
