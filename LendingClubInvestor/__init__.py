@@ -325,14 +325,13 @@ class AutoInvestor:
         """
         Log a summary of the investment option which was ordered
         """
-        summary = 'Investment portfolio summary: {0} loan notes. '.format(investmentOption['numberOfLoans'])
+        summary = 'Investment portfolio summary: {0} loan notes - '.format(investmentOption['numberOfLoans'])
 
         breakdown = []
         for grade in ['a', 'aa', 'b', 'c', 'd', 'e', 'f', 'g']:
             if investmentOption[grade] > 0.0:
                 percent = int(round(investmentOption[grade]))
-                grade = grade.upper()
-                breakdown.append('{0}% in {1}'.format(percent, grade))
+                breakdown.append('{0}:{1}%'.format(grade.upper(), percent))
 
         if len(breakdown) > 0:
             summary += ', '.join(breakdown)

@@ -261,7 +261,7 @@ class TestInvestorFlow(unittest.TestCase):
         """ Test the options summary output """
         match = self.investor.get_investment_option(200)
         summary = self.investor.get_option_summary(match)
-        expected = 'Investment portfolio summary: 8 loan notes. 13% in B, 38% in C, 13% in D, 13% in E, 25% in F.'
+        expected = 'Investment portfolio summary: 8 loan notes. B:13%, C:38%, D:13%, E:13%, F:25%.'
         self.assertEqual(summary, expected)
 
     def test_investment_option_filters_below_percent(self):
