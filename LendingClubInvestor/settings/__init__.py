@@ -213,7 +213,7 @@ class Settings():
 
             # Funding progress
             if self.investing['filters']['funding_progress'] > 0:
-                print '  + Only include loans which are already {0}% funded'.format(self.investing['filters']['funding_progress'])
+                print '  + Include loans which are at least {0}% funded'.format(self.investing['filters']['funding_progress'])
 
             # Loan term
             terms = []
@@ -314,6 +314,8 @@ class Settings():
         filters['exclude_existing'] = util.prompt_yn('Exclude loans already invested in?', filters['exclude_existing'])
 
         # Funding progress rounded to the nearest tenth
+        print '---------'
+        print 'Funding progress'
         progress = util.prompt_float('Only include loans which already have at least __% funding (0 - 100)', filters['funding_progress'])
         filters['funding_progress'] = int(round(progress / 10) * 10)
 
