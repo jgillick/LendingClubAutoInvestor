@@ -1,0 +1,3 @@
+v1.0.4, 2013-05-15:
+  * Added Funding Progress to the advanced filters
+  * Fix in-page anchors in the README file
