@@ -44,6 +44,7 @@ class AutoInvestor:
     authed = False
     verbose = False
     settings = None
+    loop = False
 
     # The directory that files will be saved to (settings, cache, logs, etc)
     # ~/.lcinvestor/
@@ -129,10 +130,18 @@ class AutoInvestor:
 
     def run(self):
         """
-        Start the auto investor loop which will regularly check the LendingClub account for funds to invest.
-        The frequency is defined by the 'frequency' value in the ~/.lcinvestor/settings.yaml file
+        Alias for investment_loop.
+        This is used by python-runner
         """
         self.investment_loop()
+
+    def stop(self):
+        """
+        Called when the investment loop should end.
+        If the loop is currently attempting to invest cash, this will not be canceled.
+        """
+        self.loop = False
+        self.logger.info("Stopping investor...")
 
     def prepare_filter_json(self):
         """
@@ -284,10 +293,10 @@ class AutoInvestor:
                 'filter': filters
             }
             response = util.post_url('/portfolio/lendingMatchOptionsV2.action', data=payload)
-            json = response.json()
+            resJson = response.json()
 
-            if json['result'] == 'success' and 'lmOptions' in json:
-                options = json['lmOptions']
+            if resJson['result'] == 'success' and 'lmOptions' in resJson:
+                options = resJson['lmOptions']
                 lastOption = False
 
                 # Loop through all the investment options
@@ -313,6 +322,8 @@ class AutoInvestor:
                 # option that was under the maximum percent
                 return lastOption
             else:
+                print payload['filter']
+                print response.json()
                 self.logger.error('Could not get investment portfolio options! Server responded with: {0}'.format(response.text))
                 return False
 
@@ -325,7 +336,7 @@ class AutoInvestor:
         """
         Log a summary of the investment option which was ordered
         """
-        summary = 'Investment portfolio summary: {0} loan notes - '.format(investmentOption['numberOfLoans'])
+        summary = 'Investment portfolio summary: {0} loan notes ('.format(investmentOption['numberOfLoans'])
 
         breakdown = []
         for grade in ['a', 'aa', 'b', 'c', 'd', 'e', 'f', 'g']:
@@ -335,7 +346,7 @@ class AutoInvestor:
 
         if len(breakdown) > 0:
             summary += ', '.join(breakdown)
-            summary += '.'
+            summary += ')'
 
         return summary
 
@@ -620,9 +631,12 @@ class AutoInvestor:
 
     def investment_loop(self):
         """
+        Start the investment loop
         Check the account every so often (default is every 60 minutes)
+        The frequency is defined by the 'frequency' value in the ~/.lcinvestor/settings.yaml file
         """
-        while(True):
+        self.loop = True
+        while(self.loop):
             self.attempt_to_invest()
 
             # Sleep for a time and then authenticate and move to the main loop

@@ -36,6 +36,24 @@ class Settings():
         'filters': False
     }
 
+    # Default investment filters
+    filters = {
+        'exclude_existing': True,
+        'term36month': True,
+        'term60month': True,
+        'funding_progress': 0,
+        'grades': {
+            'All': True,
+            'A': True,
+            'B': True,
+            'C': True,
+            'D': True,
+            'E': True,
+            'F': True,
+            'G': True
+        }
+    }
+
     # Default user settings
     user_settings = {
         'frequency': 60,
@@ -156,6 +174,8 @@ class Settings():
                 if '60month' in self.investing['filters']:
                     self.investing['filters']['term60month'] = self.investing['filters']['60month']
                     del self.investing['filters']['60month']
+                if 'funding_progress' not in self.investing['filters']:
+                    self.investing['filters']['funding_progress'] = 0
 
             except Exception as e:
                 self.logger.debug('Could not read investment settings file: {0}'.format(str(e)))
@@ -190,6 +210,10 @@ class Settings():
             # Exclude existing
             if self.investing['filters']['exclude_existing']:
                 print '  + Exclude loans already invested in'
+
+            # Funding progress
+            if self.investing['filters']['funding_progress'] > 0:
+                print '  + Only include loans which are already {0}% funded'.format(self.investing['filters']['funding_progress'])
 
             # Loan term
             terms = []
@@ -282,25 +306,16 @@ class Settings():
         """
         filters = self.investing['filters']
         if not filters:
-            filters = {
-                'exclude_existing': True,
-                'term36month': True,
-                'term60month': True,
-                'grades': {
-                    'All': True,
-                    'A': True,
-                    'B': True,
-                    'C': True,
-                    'D': True,
-                    'E': True,
-                    'F': True,
-                    'G': True
-                }
-            }
+            filters = self.filters
 
         print 'The following questions are from the filters section of the Invest page on LendingClub\n'
 
+        # Existing loans
         filters['exclude_existing'] = util.prompt_yn('Exclude loans already invested in?', filters['exclude_existing'])
+
+        # Funding progress rounded to the nearest tenth
+        progress = util.prompt_float('Only include loans which already have at least __% funding (0 - 100)', filters['funding_progress'])
+        filters['funding_progress'] = int(round(progress / 10) * 10)
 
         print '---------'
         print 'Choose term (36 - 60 month)'

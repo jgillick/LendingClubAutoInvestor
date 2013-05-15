@@ -156,10 +156,8 @@ existing portfolios in your account or create a new one.
 Advanced Filters
 ----------------
 
-**Experimental!** These are the filters from the `Invest
-page <https://www.lendingclub.com/portfolio/autoInvest.action>`_ on
-LendingClub that will let you filter out investments by term length,
-loans you're already invested in and interest rate grades (A - G).
+These are the filters from the `Invest page <https://www.lendingclub.com/portfolio/autoInvest.action>`_ on
+LendingClub that will let you filter out investments by term length, loans you're already invested in and interest rate grades (A - G).
 
 Final Review
 ------------

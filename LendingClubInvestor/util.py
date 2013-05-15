@@ -101,9 +101,10 @@ def prompt_float(msg, prefill=False):
     while(True):
         response = prompt(msg, prefill)
 
-        # Remove commas
+        # Remove commas and symbol suffix/prefix
         if type(response) == str:
             response = response.replace(',', '')
+            response = re.sub('^([^0-9]*)|([^0-9]*)$', '', response)
 
         if type(response) == float:
             return response
@@ -117,9 +118,10 @@ def prompt_int(msg, prefill=False):
     while(True):
         response = prompt(msg, prefill)
 
-        # Remove commas
+        # Remove commas and symbol suffix/prefix
         if type(response) == str:
             response = response.replace(',', '')
+            response = re.sub('^([^0-9]*)|([^0-9]*)$', '', response)
 
         # Validate response
         if type(response) == int:
@@ -301,6 +303,105 @@ def get_filter_json(filters):
             "m_visible": false,
             "m_position": 0
         },
+        {{#if funding_progress}}
+        {
+            "m_id": 15,
+            "m_metadata": {
+              "m_controlValues": [
+                {
+                  "value": 0,
+                  "label": "0%",
+                  "sqlValue": null,
+                  "valueIndex": 0
+                },
+                {
+                  "value": 10,
+                  "label": "10%",
+                  "sqlValue": null,
+                  "valueIndex": 1
+                },
+                {
+                  "value": 20,
+                  "label": "20%",
+                  "sqlValue": null,
+                  "valueIndex": 2
+                },
+                {
+                  "value": 30,
+                  "label": "30%",
+                  "sqlValue": null,
+                  "valueIndex": 3
+                },
+                {
+                  "value": 40,
+                  "label": "40%",
+                  "sqlValue": null,
+                  "valueIndex": 4
+                },
+                {
+                  "value": 50,
+                  "label": "50%",
+                  "sqlValue": null,
+                  "valueIndex": 5
+                },
+                {
+                  "value": 60,
+                  "label": "60%",
+                  "sqlValue": null,
+                  "valueIndex": 6
+                },
+                {
+                  "value": 70,
+                  "label": "70%",
+                  "sqlValue": null,
+                  "valueIndex": 7
+                },
+                {
+                  "value": 80,
+                  "label": "80%",
+                  "sqlValue": null,
+                  "valueIndex": 8
+                },
+                {
+                  "value": 90,
+                  "label": "90%",
+                  "sqlValue": null,
+                  "valueIndex": 9
+                },
+                {
+                  "value": 100,
+                  "label": "100%",
+                  "sqlValue": null,
+                  "valueIndex": 10
+                }
+              ],
+              "m_type": "SVAL",
+              "m_rep": "SLIDER",
+              "m_label": "Funding Progress",
+              "id": 15,
+              "m_onHoverHelp": "Specify a minimum funding level percentage desired.",
+              "m_className": "classname",
+              "m_defaultValue": [
+                {
+                  "value": 0,
+                  "label": "0%",
+                  "sqlValue": null,
+                  "valueIndex": 0
+                }
+              ]
+            },
+            "m_value": [
+              {
+                "value": {{funding_progress}},
+                "label": "{{funding_progress}}%",
+                "sqlValue": null,
+                "valueIndex": 1
+              }
+            ],
+            "m_visible": false,
+            "m_position": 0
+        },
+        {{/if}}
         {
             "m_id": 10,
             "m_metadata": {

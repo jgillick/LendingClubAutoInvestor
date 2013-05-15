@@ -207,6 +207,7 @@ class TestInvestorFlow(unittest.TestCase):
         """ Sets all the filters to default valeus (True) """
         self.settings.investing['filters'] = {
             'exclude_existing': True,
+            'funding_progress': 0,
             'term36month': True,
             'term60month': True,
             'grades': {
@@ -261,7 +262,7 @@ class TestInvestorFlow(unittest.TestCase):
         """ Test the options summary output """
         match = self.investor.get_investment_option(200)
         summary = self.investor.get_option_summary(match)
-        expected = 'Investment portfolio summary: 8 loan notes. B:13%, C:38%, D:13%, E:13%, F:25%.'
+        expected = 'Investment portfolio summary: 8 loan notes (B:13%, C:38%, D:13%, E:13%, F:25%)'
         self.assertEqual(summary, expected)
 
     def test_investment_option_filters_below_percent(self):
@@ -304,7 +305,8 @@ class TestInvestorFlow(unittest.TestCase):
         util.get_filter_json = formerFilterFunc
 
     def test_investment_option_filters_within_percent(self):
-        """ Investment Options within percent settings.
+        """ test_investment_option_filters_within_percent
+        Investment Options within percent settings.
         Set min/max settings to be within options returned with filters """
 
         self.set_filters()
@@ -312,7 +314,9 @@ class TestInvestorFlow(unittest.TestCase):
         # Default min/max are 16.5 - 19.0, filtered results fixture only goes up to 15.03
         self.settings.investing['minPercent'] = 13.0
         self.settings.investing['maxPercent'] = 14.5
+        print 'THIS IS WHERE IT FAILS'
         match = self.investor.get_investment_option(200)
+        self.assertTrue((match != False))
         self.assertEqual(match['percentage'], 14.5)  # should be a perfect match
 
     def test_investment_option_validate(self):
