@@ -28,8 +28,7 @@ How it works
 When running it checks your account balances every 30 minutes, if the
 available cash meets or exceeds a `threshold you set <#minimum-cash>`_,
 it's all automatically invested in a portfolio with an average interest
-rate within your `specified
-boundaries <#minmax-percent-interest-rate>`_.
+rate within your `specified boundaries <#minmax-percent-interest-rate>`_.
 
 To put it simply, the tool does the same thing as if you were to: \* Log
 into your account \* Click Invest \* Click More Options \* Select an
@@ -117,6 +116,8 @@ Email / Password
 This is the email and password you use to sign into LendingClub. Your
 password will be kept in memory but never saved to file.
 
+.. _minimum_cash:
+
 Minimum cash
 ------------
 
@@ -125,6 +126,8 @@ cash in your account into a investment portfolio. However, you will
 probably want it to wait until your account has a certain amount of cash
 before investing. For example, $25 will only invest in a single note,
 whereas $1000 could be invested across up to 40 notes.
+
+.. _minmax_percent_interest_rate:
 
 Min/Max Percent interest rate
 -----------------------------
