@@ -40,14 +40,17 @@ if sys.argv[0][0:2] == './':
 import LendingClubInvestor
 
 investor = None
-pid_lockfilepath = '/tmp/lcinvestor.pid'
+pid_lockfile = 'lcinvestor.pid'
 
 
 def interupt_handler(signum, frame):
         """
         Exit gracefully
         """
-        print '\n\nStopping program...\n'
+        if investor:
+            investor.stop()
+        else:
+            print '\n\nStopping program...\n'
         exit(0)
 signal.signal(signal.SIGINT, interupt_handler)
 
@@ -58,10 +61,21 @@ def is_daemon_running():
     True if the daemon is believed to be running (based on the lockfile)
     False if it is not.
     """
-    lockfile = runner.make_pidlockfile(pid_lockfilepath, 1)
+    path = get_lockfile_path()
+    lockfile = runner.make_pidlockfile(path, 1)
     if lockfile.is_locked():
         return True
     return False
+
+
+def get_lockfile_path():
+    """
+    Get the path to the PID lockfile.
+    This file will live in the default user app directory set by the AutoInvestor class
+    """
+    inv = LendingClubInvestor.AutoInvestor(verbose=False)
+    path = os.path.join(inv.app_dir, pid_lockfile)
+    return path
 
 if __name__ == '__main__':
 
@@ -121,7 +135,7 @@ if __name__ == '__main__':
             investor.stdin_path = '/dev/null'
             investor.stdout_path = logfile_path
             investor.stderr_path = logfile_path
-            investor.pidfile_path = pid_lockfilepath
+            investor.pidfile_path = get_lockfile_path()
             investor.pidfile_timeout = 1
 
             # Check if the pid locked file ststus
