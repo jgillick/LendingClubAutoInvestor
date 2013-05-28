@@ -5,19 +5,35 @@
 #
 
 import re
+import os
 import logging
 import requests
 import getpass
 from pybars import Compiler
 
 baseUrl = 'https://www.lendingclub.com/'
-logger = False
+logger = None
 
 cookies = {}
 requestHeaders = {
     'Referer': 'https://www.lendingclub.com/',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31'
 }
+
+
+def get_app_directory():
+    """
+    Setup and return the path to the directory that holds all the user settings and files for this app (~/.lcinvestor/).
+    """
+
+    app_dir = os.path.join(os.path.expanduser('~'), '.lcinvestor')
+    if os.path.exists(app_dir) and not os.path.isdir(app_dir):
+        raise AutoInvestorUtilError('The path \'{0}\' is not a directory.'.format(app_dir))
+    elif not os.path.exists(app_dir):
+        os.mkdir(app_dir)
+
+    return app_dir
+
 
 def create_logger(verbose=False):
     """
@@ -49,6 +65,7 @@ def post_url(relUrl, params={}, data={}, useCookies=True):
     global cookies
 
     url = '{0}{1}'.format(baseUrl, relUrl)
+    url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
     logger.debug('POSTING {0}'.format(url))
     cookies = cookies if useCookies else {}
     return requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
@@ -61,6 +78,7 @@ def get_url(relUrl, params={}, useCookies=True):
     global cookies
 
     url = '{0}{1}'.format(baseUrl, relUrl)
+    url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
     logger.debug('GETTING {0}'.format(url))
     cookies = cookies if useCookies else {}
     return requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
@@ -579,3 +597,12 @@ def get_filter_json(filters):
     out = re.sub('\s*([{\\[\\]}:,])\s*', '\\1', out)
 
     return out
+
+
+class AutoInvestorUtilError(Exception):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)

@@ -73,8 +73,8 @@ def get_lockfile_path():
     Get the path to the PID lockfile.
     This file will live in the default user app directory set by the AutoInvestor class
     """
-    inv = LendingClubInvestor.AutoInvestor(verbose=False)
-    path = os.path.join(inv.app_dir, pid_lockfile)
+    app_dir = LendingClubInvestor.util.get_app_directory()
+    path = os.path.join(app_dir, pid_lockfile)
     return path
 
 if __name__ == '__main__':

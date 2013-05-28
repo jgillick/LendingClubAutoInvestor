@@ -1,3 +1,10 @@
+v1.0.5, 2013-05-28:
+  * Getting portfolio list was broken due to extra slash ('/') in the API URL.
+    + Fixed by removing double slashes before making GET or POST requests
+  * Move the app directory setup to the util.py
+  * Create a live unit testing
+  * Move the PID lockfile to the app directory. (it was being removed from the tmp directory by the OS)
+
 v1.0.4, 2013-05-15:
   * Added Funding Progress to the advanced filters
   * Fix in-page anchors in the README file

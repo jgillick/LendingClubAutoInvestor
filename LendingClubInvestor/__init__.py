@@ -30,6 +30,7 @@ import json
 import traceback
 import time
 from time import sleep
+from datetime import datetime
 from bs4 import BeautifulSoup
 from LendingClubInvestor import util
 from LendingClubInvestor.settings import Settings
@@ -45,10 +46,7 @@ class AutoInvestor:
     verbose = False
     settings = None
     loop = False
-
-    # The directory that files will be saved to (settings, cache, logs, etc)
-    # ~/.lcinvestor/
-    app_dir = os.path.join(os.path.expanduser('~'), '.lcinvestor')
+    app_dir = None
 
     # The file that the summary from the last investment is saved to
     last_investment_file = 'last_investment.json'
@@ -62,16 +60,11 @@ class AutoInvestor:
         """
         self.verbose = verbose
         self.logger = util.create_logger(verbose)
-
-        # Setup user directory
-        if os.path.exists(self.app_dir) and not os.path.isdir(self.app_dir):
-            raise AutoInvestorError('The path \'{0}\' is not a directory.'.format(self.app_dir))
-        elif not os.path.exists(self.app_dir):
-            os.mkdir(self.app_dir)
+        self.app_dir = util.get_app_directory()
 
         # Create settings object
         if settings is False:
-            self.settings = Settings(self.app_dir, self.logger)
+            self.settings = Settings(settings_dir=self.app_dir, logger=self.logger)
         else:
             self.settings = settings
         self.settings.investor = self  # create a link back to this instance
@@ -632,16 +625,27 @@ class AutoInvestor:
     def investment_loop(self):
         """
         Start the investment loop
-        Check the account every so often (default is every 60 minutes)
+        Check the account every so often (default is every 60 minutes) for funds to invest
         The frequency is defined by the 'frequency' value in the ~/.lcinvestor/settings.yaml file
         """
         self.loop = True
-        while(self.loop):
-            self.attempt_to_invest()
+        nextTime = 0
+        frequency = self.settings.user_settings['frequency'] * 60  # minutes -> seconds
 
-            # Sleep for a time and then authenticate and move to the main loop
-            frequency = self.settings.user_settings['frequency'] * 60
-            sleep(frequency)
+        while(self.loop):
+            now = int(time.time())
+
+            # The minimum time has elapsed since the last investment attempt
+            if now >= nextTime:
+                # Set the next time the loop should try to invest
+                nextTime = now + frequency
+
+                # Invest
+                self.attempt_to_invest()
+
+            # Wait at least 1 second before trying again
+            else:
+                sleep(1)
 
     def authenticate(self):
         """
@@ -670,11 +674,11 @@ class AutoInvestor:
         foliosNames = []
         try:
             response = util.get_url('/data/portfolioManagement?method=getLCPortfolios')
-            json = response.json()
+            jsonRes = response.json()
 
             # Get portfolios and create a list of names
-            if json['result'] == 'success':
-                folios = json['results']
+            if jsonRes['result'] == 'success':
+                folios = jsonRes['results']
                 for folio in folios:
                     foliosNames.append(folio['portfolioName'])
 
