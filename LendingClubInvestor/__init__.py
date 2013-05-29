@@ -501,11 +501,11 @@ class AutoInvestor:
         cash = -1
         try:
             response = util.get_url('/browse/cashBalanceAj.action')
-            json = response.json()
+            jsonRes = response.json()
 
-            if json['result'] == 'success':
-                self.logger.debug('Cash available: {0}'.format(json['cashBalance']))
-                cash = util.currency_to_float(json['cashBalance'])
+            if jsonRes['result'] == 'success':
+                self.logger.debug('Cash available: {0}'.format(jsonRes['cashBalance']))
+                cash = util.currency_to_float(jsonRes['cashBalance'])
             else:
                 self.logger.error('Could not get cash balance: {0}'.format(response.text))
 
@@ -637,6 +637,13 @@ class AutoInvestor:
 
             # The minimum time has elapsed since the last investment attempt
             if now >= nextTime:
+
+                # If the delta between now and nextTime is greater than a minute, the computer
+                # might have been sleeping. Allow time to reconnect to the network before attempting
+                if nextTime > 0 and now - nextTime > 60:
+                    self.logger.info('Checking in 10 seconds...')
+                    sleep(10)
+
                 # Set the next time the loop should try to invest
                 nextTime = now + frequency
 
@@ -652,19 +659,22 @@ class AutoInvestor:
         Attempt to authenticate the user with the email/pass in the investing dictionary.
         Returns True/False
         """
+        try:
+            payload = {
+                'login_email': self.settings.auth['email'],
+                'login_password': self.settings.auth['pass']
+            }
+            response = util.post_url('/account/login.action', data=payload, useCookies=False)
 
-        payload = {
-            'login_email': self.settings.auth['email'],
-            'login_password': self.settings.auth['pass']
-        }
-        response = util.post_url('/account/login.action', data=payload, useCookies=False)
+            if (response.status_code == 200 or response.status_code == 302) and 'LC_FIRSTNAME' in response.cookies:
+                self.authed = True
+                util.cookies = response.cookies
+                return True
 
-        if (response.status_code == 200 or response.status_code == 302) and 'LC_FIRSTNAME' in response.cookies:
-            self.authed = True
-            util.cookies = response.cookies
-            return True
+            self.logger.error('Authentication returned {0}. Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
+        except Exception as e:
+            self.logger.warning('Authentication failed! {0}'.format(str(e)))
 
-        self.logger.error('Authentication returned {0}. Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
         return False
 
     def get_portfolio_list(self):

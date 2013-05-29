@@ -10,6 +10,7 @@ import logging
 import requests
 import getpass
 from pybars import Compiler
+from requests.exceptions import *
 
 baseUrl = 'https://www.lendingclub.com/'
 logger = None
@@ -65,10 +66,18 @@ def post_url(relUrl, params={}, data={}, useCookies=True):
     global cookies
 
     url = '{0}{1}'.format(baseUrl, relUrl)
-    url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
-    logger.debug('POSTING {0}'.format(url))
-    cookies = cookies if useCookies else {}
-    return requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
+    try:
+        url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
+        logger.debug('POSTING {0}'.format(url))
+        cookies = cookies if useCookies else {}
+        return requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
+
+    except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
+        raise Exception('Could not post to: {0}\n{1}'.format(url, str(e)))
+    except Timeout:
+        raise Exception('Timed out trying to post to: {0}'.format(url))
+
+    return False
 
 
 def get_url(relUrl, params={}, useCookies=True):
@@ -78,10 +87,18 @@ def get_url(relUrl, params={}, useCookies=True):
     global cookies
 
     url = '{0}{1}'.format(baseUrl, relUrl)
-    url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
-    logger.debug('GETTING {0}'.format(url))
-    cookies = cookies if useCookies else {}
-    return requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
+    try:
+        url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
+        logger.debug('GETTING {0}'.format(url))
+        cookies = cookies if useCookies else {}
+        return requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
+
+    except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
+        raise Exception('Could not get URL "{0}" with {1}\n{2}'.format(url, str(params), str(e)))
+    except Timeout:
+        raise Exception('Timed out trying to get URL "{0}" with {1}'.format(url, str(params)))
+
+    return False
 
 
 def get_password():
