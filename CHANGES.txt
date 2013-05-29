@@ -1,3 +1,7 @@
+v1.0.6, 2013-05-28:
+  * Add better exception handling for network requests
+  * If it seems like the computer just came out of sleep, pause 10 seconds before running the loop to allow the network to reconnect
+
 v1.0.5, 2013-05-28:
   * Getting portfolio list was broken due to extra slash ('/') in the API URL.
     + Fixed by removing double slashes before making GET or POST requests
