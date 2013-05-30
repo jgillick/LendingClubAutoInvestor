@@ -1,3 +1,6 @@
+v1.0.7, 2013-05-28:
+  * Better network reconnect support: Before trying to invest, it waits until the connection to lendingclub.com is available.
+
 v1.0.6, 2013-05-28:
   * Add better exception handling for network requests
   * If it seems like the computer just came out of sleep, pause 10 seconds before running the loop to allow the network to reconnect

@@ -59,6 +59,19 @@ def create_logger(verbose=False):
     return logger
 
 
+def is_site_available():
+    """
+    Returns true if we can access LendingClub.com
+    This is also a simple test to see if there's an internet connection
+    """
+    try:
+        response = requests.head(baseUrl, headers=requestHeaders)
+        status = response.status_code
+        return 200 <= status < 400
+    except Exception as e:
+        return False
+
+
 def post_url(relUrl, params={}, data={}, useCookies=True):
     """
     Sends POST request to the relative URL of www.lendingclub.com

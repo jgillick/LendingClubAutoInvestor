@@ -631,17 +631,18 @@ class AutoInvestor:
         self.loop = True
         nextTime = 0
         frequency = self.settings.user_settings['frequency'] * 60  # minutes -> seconds
-
-        while(self.loop):
+        while self.loop:
             now = int(time.time())
 
             # The minimum time has elapsed since the last investment attempt
             if now >= nextTime:
 
-                # If the delta between now and nextTime is greater than a minute, the computer
-                # might have been sleeping. Allow time to reconnect to the network before attempting
-                if nextTime > 0 and now - nextTime > 60:
-                    self.logger.info('Checking in 10 seconds...')
+                # Wait until the site is available (network could be reconnecting after sleep)
+                attempts = 0
+                while not util.is_site_available() and self.loop:
+                    attempts += 1
+                    if attempts % 5 == 0:
+                        self.logger.warn('LendingClub is not responding. Trying again in 10 seconds...')
                     sleep(10)
 
                 # Set the next time the loop should try to invest
