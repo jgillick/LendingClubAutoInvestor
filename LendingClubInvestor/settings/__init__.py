@@ -73,7 +73,7 @@ class Settings():
         else:
             self.logger = logger
 
-        # Create the settings directory, if ti doesn't exist
+        # Create the settings directory, if it doesn't exist
         if self.settings_dir and not os.path.exists(self.settings_dir):
             os.mkdir(self.settings_dir)
 
