@@ -62,6 +62,10 @@ The tool can be run directly from the bin directory *or* installed globally, by 
 
     sudo python ./setup.py install
 
+It can also be installed with PIP::
+
+     sudo pip install lcinvestor
+
 
 Running
 =======
