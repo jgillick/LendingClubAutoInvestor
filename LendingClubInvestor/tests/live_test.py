@@ -21,9 +21,10 @@ class LiveTestAPIs(unittest.TestCase):
 
     def setUp(self):
         logger = TestLogger()
-        baseDir = os.path.dirname(os.path.realpath(__file__))
+        base_dir = os.path.dirname(os.path.realpath(__file__))
+        app_dir = os.path.join(base_dir, '.live_test')
 
-        settings = Settings(settings_dir=baseDir, logger=logger)
+        settings = Settings(settings_dir=app_dir, logger=logger)
         self.investor = LendingClubInvestor.AutoInvestor(settings=settings, verbose=True)
 
         self.investor.settings.get_auth_settings()

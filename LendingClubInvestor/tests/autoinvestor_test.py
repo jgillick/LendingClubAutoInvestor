@@ -176,9 +176,10 @@ class TestInvestorFlow(unittest.TestCase):
 
         logger = TestLogger()
         base_dir = os.path.dirname(os.path.realpath(__file__))
+        app_dir = os.path.join(base_dir, '.autoinvestor_test')
 
         # Create investor objects
-        self.settings = Settings(settings_dir=os.path.join(base_dir, 'testsettings'), logger=logger)
+        self.settings = Settings(settings_dir=app_dir, logger=logger)
         self.settings.auth = {
             'email': 'test@test.com',
             'pass': 'testpassword'
