@@ -1,4 +1,4 @@
-v1.0.7, 2013-05-28:
+v1.1, 2013-05-28, 2013-06-04:
   * Better network reconnect support: Before trying to invest, it waits until the connection to lendingclub.com is available.
 
 v1.0.6, 2013-05-28:
