@@ -30,7 +30,6 @@ import json
 import traceback
 import time
 from time import sleep
-from datetime import datetime
 from bs4 import BeautifulSoup
 from LendingClubInvestor import util
 from LendingClubInvestor.settings import Settings
