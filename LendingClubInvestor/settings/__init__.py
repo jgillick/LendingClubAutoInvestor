@@ -383,10 +383,10 @@ class Settings():
 
         self.investing['filters'] = filters
 
-    def portfolio_picker(self, previous_folio=False):
+    def portfolio_picker(self, default_folio=False):
         """
         Load existing portfolios and let the user choose one or create a new one
-        previous_folio is the name of the last portfolio selected
+        default_folio is the name of the default portfolio, or the one that was used last time.
         """
 
         if not self.investor:
@@ -396,37 +396,43 @@ class Settings():
         try:
             folios = self.investor.get_portfolio_list()
 
+            # Add default portfolio to the list
+            if default_folio is not False and default_folio not in folios:
+                folios.append(default_folio)
+
             # Print out the portfolio list
+            folios.sort()
             i = 1
             other_index = 0
             cancel_index = 0
-            previous_index = 0
+            default_indicator = ''
+            default_index = False
             for folio in folios:
-                print '{0}: {1}'.format(i, folio)
+                default_indicator = '  '
+                if default_folio == folio:
+                    default_indicator = '> '
+                    default_index = str(i)
 
-                if previous_folio == folio:
-                    previous_folio = False
-
-                i += 1
-
-            if previous_folio is not False:
-                previous_index = i
-                print '{0}: {1}'.format(previous_index, previous_folio)
+                print '{0}{1}: {2}'.format(default_indicator, i, folio)
                 i += 1
 
             other_index = i
-            print '{0}: Other'.format(other_index)
+            print '  {0}: Other'.format(other_index)
             i += 1
 
             cancel_index = i
-            print '{0}: Cancel'.format(cancel_index)
+            print '  {0}: Cancel'.format(cancel_index)
 
             # Choose a portfolio
             while(True):
-                choice = util.prompt('Choose one')
+                choice = util.prompt('Choose one', default_index)
 
+                # If no digit was chosen, ask again unless a default portfolio is present
                 if not choice.isdigit():
-                    continue
+                    if default_folio is not False:
+                        return default_folio
+                    else:
+                        continue
                 choice = int(choice)
 
                 # No zero
@@ -436,10 +442,6 @@ class Settings():
                 # Existing portfolio chosen
                 if choice <= len(folios):
                     break
-
-                # Previous
-                elif choice == previous_index:
-                    return previous_folio
 
                 # Other
                 elif choice == other_index:
@@ -452,7 +454,7 @@ class Settings():
 
                         # Invalid character
                         elif re.search('[^a-zA-Z0-9 ,_\-#\.]', other):
-                            print 'The portfolio name is not valid, only alphanumeric space , _ - # and . are allowed.'
+                            print 'The portfolio name \'{0}\' is not valid! Only alphanumeric, spaces , _ - # and . are allowed.'.format(other)
 
                         # Return custom portfolio name
                         else:

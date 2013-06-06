@@ -138,7 +138,7 @@ if __name__ == '__main__':
             investor.pidfile_path = get_lockfile_path()
             investor.pidfile_timeout = 1
 
-            # Check if the pid locked file ststus
+            # Check if the pid locked file status
             if is_daemon_running():
                 if isStarting:
                     print 'It looks like an investor daemon is already running!\nIf this is incorrect, delete \'{0}\' and try again.'.format(investor.pidfile_path)
