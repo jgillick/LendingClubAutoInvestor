@@ -1,3 +1,6 @@
+v1.3 2013-06-07:
+  * Replace manual loop time calculations with 'pause' (https://github.com/jgillick/python-pause).
+
 v1.2 2013-06-06:
   * Better display for the default named portfolio in the portfolio picker. When the user presses enter, select it by default.
 

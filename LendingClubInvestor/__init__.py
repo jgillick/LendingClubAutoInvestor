@@ -29,6 +29,7 @@ import os
 import json
 import traceback
 import time
+import pause
 from time import sleep
 from bs4 import BeautifulSoup
 from LendingClubInvestor import util
@@ -628,31 +629,20 @@ class AutoInvestor:
         The frequency is defined by the 'frequency' value in the ~/.lcinvestor/settings.yaml file
         """
         self.loop = True
-        nextTime = 0
-        frequency = self.settings.user_settings['frequency'] * 60  # minutes -> seconds
+        frequency = self.settings.user_settings['frequency']
         while self.loop:
-            now = int(time.time())
 
-            # The minimum time has elapsed since the last investment attempt
-            if now >= nextTime:
+            # Make sure the site is available (network could be reconnecting after sleep)
+            attempts = 0
+            while not util.is_site_available() and self.loop:
+                attempts += 1
+                if attempts % 5 == 0:
+                    self.logger.warn('LendingClub is not responding. Trying again in 10 seconds...')
+                sleep(10)
 
-                # Wait until the site is available (network could be reconnecting after sleep)
-                attempts = 0
-                while not util.is_site_available() and self.loop:
-                    attempts += 1
-                    if attempts % 5 == 0:
-                        self.logger.warn('LendingClub is not responding. Trying again in 10 seconds...')
-                    sleep(10)
-
-                # Set the next time the loop should try to invest
-                nextTime = now + frequency
-
-                # Invest
-                self.attempt_to_invest()
-
-            # Wait at least 1 second before trying again
-            else:
-                sleep(1)
+            # Invest
+            self.attempt_to_invest()
+            pause.minutes(frequency)
 
     def authenticate(self):
         """
