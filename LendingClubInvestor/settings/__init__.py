@@ -237,7 +237,7 @@ class Settings():
 
             # Funding progress
             if self.investing['filters']['funding_progress'] > 0:
-                print '  + Include loans which are at least {0}% funded'.format(self.investing['filters']['funding_progress'])
+                print '  + Only loans which are at least {0}% funded'.format(self.investing['filters']['funding_progress'])
 
             # Loan term
             terms = []
