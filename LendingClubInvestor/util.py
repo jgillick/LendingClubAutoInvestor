@@ -105,9 +105,11 @@ def post_url(relUrl, params={}, data={}, useCookies=True):
     url = '{0}{1}'.format(baseUrl, relUrl)
     try:
         url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
-        logger.debug('POSTING {0}'.format(url))
         cookies = cookies if useCookies else {}
-        return requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
+
+        logger.debug('POSTING {0}'.format(url))
+        req = requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
+        return req
 
     except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
         raise Exception('Could not post to: {0}\n{1}'.format(url, str(e)))
@@ -126,9 +128,11 @@ def get_url(relUrl, params={}, useCookies=True):
     url = '{0}{1}'.format(baseUrl, relUrl)
     try:
         url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
-        logger.debug('GETTING {0}'.format(url))
         cookies = cookies if useCookies else {}
-        return requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
+
+        logger.debug('GETTING {0}'.format(url))
+        req = requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
+        return req
 
     except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
         raise Exception('Could not get URL "{0}" with {1}\n{2}'.format(url, str(params), str(e)))

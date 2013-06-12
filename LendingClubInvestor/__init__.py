@@ -30,6 +30,7 @@ import json
 import traceback
 import time
 import pause
+import re
 from time import sleep
 from bs4 import BeautifulSoup
 from LendingClubInvestor import util
@@ -656,12 +657,33 @@ class AutoInvestor:
             }
             response = util.post_url('/account/login.action', data=payload, useCookies=False)
 
-            if (response.status_code == 200 or response.status_code == 302) and 'LC_FIRSTNAME' in response.cookies:
+            # Login endpoint
+            endpoint = response.url.split('/')[-1]
+            self.logger.debug('Redirected to {0}'.format(response.url))
+
+            # Parse any errors
+            soup = BeautifulSoup(response.text, "html5lib")
+            errors = soup.find(id='master_error-list')
+            if errors:
+                errors = errors.text.strip()
+
+                # Remove extra spaces and newlines from error message
+                errors = re.sub('\t+', '', errors)
+                errors = re.sub('\s*\n+\s*', ' * ', errors)
+
+                if errors == '':
+                    errors = None
+
+            # Login succeeded
+            if (response.status_code == 200 or response.status_code == 302) and errors is None and endpoint != 'login.action':
                 self.authed = True
                 util.cookies = response.cookies
                 return True
 
-            self.logger.error('Authentication returned {0}. Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
+            # Failed messaging
+            self.logger.debug('Authentication failed. Status code: {0}, Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
+            self.logger.error('Login error message: {0}'.format(errors))
+
         except Exception as e:
             self.logger.warning('Authentication failed! {0}'.format(str(e)))
 
