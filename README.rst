@@ -140,7 +140,7 @@ The advanced filters section brings in a few of the filters from the `Invest pag
 * Filter by loan grade (A - G)
 * Exclude loans you're already invested in
 * Include loans by their funding progress
-* Filter by term length (36 - 50 months)
+* Filter by term length (36 - 60 months)
 
 Final Review
 ------------
