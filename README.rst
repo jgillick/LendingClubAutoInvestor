@@ -49,10 +49,13 @@ Requirements
 * beautifulsoup4
 * html5lib
 * argparse
+* pybars
+* pyyaml
+* pause
 
 These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`_::
 
-    sudo pip install python-daemon requests beautifulsoup4 html5lib argparse pybars pyyaml
+    sudo pip install python-daemon requests beautifulsoup4 html5lib argparse pybars pyyaml pause
 
 
 Install
@@ -82,7 +85,7 @@ The script will run continuously and print all the output to the screen until yo
 Background (daemon)
 -------------------
 
-To run it as a background daemon::
+To run it as a background daemon (does not work on Windows)::
 
     $ lcinvestor start
 

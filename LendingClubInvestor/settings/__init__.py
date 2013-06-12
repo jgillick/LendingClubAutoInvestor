@@ -84,7 +84,7 @@ class Settings():
         'alert': False
     }
 
-    def __init__(self, settings_dir=None, logger=False):
+    def __init__(self, settings_dir=None, logger=False, verbose=False):
         """
         settings_dir is the directory that will be used to
         save the user and investment settings files
@@ -93,7 +93,7 @@ class Settings():
 
         # Create logger if none was passed in
         if not logger:
-            self.logger = util.create_logger(False)
+            self.logger = util.create_logger(verbose)
         else:
             self.logger = logger
 

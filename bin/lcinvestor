@@ -27,10 +27,14 @@ THE SOFTWARE.
 import os
 import signal
 import sys
-import daemon
 from datetime import datetime
-from daemon import runner
 import argparse
+
+try:
+    from daemon import runner
+    hasDeamonRunner = True
+except ImportError:
+    hasDeamonRunner = False
 
 # Add local paths to support running without installing
 if sys.argv[0][0:2] == './':
@@ -80,13 +84,20 @@ def get_lockfile_path():
 if __name__ == '__main__':
 
     # Process command flags
-    parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    if hasDeamonRunner:
+        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    else:
+        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options]')
+
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
-    parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
+
+    if hasDeamonRunner:
+        parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
+
     options = parser.parse_args()
 
-    options.action = options.__dict__['start/stop/status']
+    options.action = options.__dict__['start/stop/status'] if hasDeamonRunner else []
     action = options.action[0] if (len(options.action) > 0) else None
     isVerbose = options.verbose
     isDaemon = (action is not None)
@@ -128,7 +139,7 @@ if __name__ == '__main__':
             exit(0)
 
         # Start daemon
-        if isDaemon:
+        if hasDeamonRunner and isDaemon:
 
             # Set daemon attributes
             logfile_path = os.path.join(investor.app_dir, 'daemon.log')

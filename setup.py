@@ -17,10 +17,12 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "python-daemon >= 1.6",
-        "requests >= 1.2.0",
+        "requests >= 1.2.3",
         "beautifulsoup4 >= 4.1.3",
         "html5lib >= 0.95",
         "argparse >= 1.2.1",
+        "pybars >= 0.0.4",
+        "pyyaml >= 3.09",
         "pause >= 0.1.2"
     ],
     platforms='osx, posix, linux, windows',

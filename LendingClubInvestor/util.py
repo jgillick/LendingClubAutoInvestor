@@ -34,11 +34,13 @@ import logging
 import requests
 import getpass
 from pybars import Compiler
+from bs4 import BeautifulSoup
 from requests.exceptions import *
 
 baseUrl = 'https://www.lendingclub.com/'
 logger = None
 
+session = requests.Session()
 cookies = {}
 requestHeaders = {
     'Referer': 'https://www.lendingclub.com/',
@@ -66,19 +68,20 @@ def create_logger(verbose=False):
     """
     global logger
 
-    logger = logging.getLogger('investor')
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    if logger is None:
+        logger = logging.getLogger('investor')
+        if verbose:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.INFO)
 
-    logHandler = logging.StreamHandler()
-    if verbose:
-        logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s #%(lineno)d - %(message)s', '%Y-%m-%d %H:%M'))
-    else:
-        logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(message)s', '%Y-%m-%d %H:%M'))
+        logHandler = logging.StreamHandler()
+        if verbose:
+            logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s #%(lineno)d - %(message)s', '%Y-%m-%d %H:%M'))
+        else:
+            logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(message)s', '%Y-%m-%d %H:%M'))
 
-    logger.addHandler(logHandler)
+        logger.addHandler(logHandler)
 
     return logger
 
@@ -92,15 +95,77 @@ def is_site_available():
         response = requests.head(baseUrl, headers=requestHeaders)
         status = response.status_code
         return 200 <= status < 400
-    except Exception as e:
+    except Exception:
         return False
+
+
+def start_session(email, password):
+    """
+    Login user to LendingClub and preserve the user session for future requests
+    This will raise an exception if the login appears to have failed.
+
+    The problem is that LendingClub doesn't seem to have a login API that we can access directly,
+    so the code has to try to decide if the login worked or not.
+    """
+    global session
+
+    try:
+        session = requests.Session()
+        session.headers = requestHeaders
+
+        url = '{0}{1}'.format(baseUrl, '/account/login.action')
+        url = re.sub('([^:])//', '\\1/', url)  # Remove double slashes
+        payload = {
+            'login_email': email,
+            'login_password': password
+        }
+        response = session.post(url, data=payload, allow_redirects=False)
+
+        # Get URL endpoint
+        responseUrl = response.url
+        if response.status_code == 302:
+            responseUrl = response.headers['location']
+        endpoint = responseUrl.split('/')[-1]
+
+        # Debugging
+        logger.debug('Status code: {0}'.format(response.status_code))
+        logger.debug('Redirected to: {0}'.format(responseUrl))
+        logger.debug('Cookies: {0}'.format(str(response.cookies.keys())))
+
+        # Parse any errors
+        soup = BeautifulSoup(response.text, "html5lib")
+        errors = soup.find(id='master_error-list')
+        if errors:
+            errors = errors.text.strip()
+
+            # Remove extra spaces and newlines from error message
+            errors = re.sub('\t+', '', errors)
+            errors = re.sub('\s*\n+\s*', ' * ', errors)
+
+            if errors == '':
+                errors = None
+
+        # Raise error
+        if errors is not None:
+            raise Exception(errors)
+
+        # Redirected back to the login page...must be an error
+        if endpoint == 'login.action':
+            raise Exception('An unknown error occurred')
+
+    except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
+        raise Exception('Could not get login from: {0}\n{1}'.format(url, str(e)))
+    except Timeout:
+        raise Exception('Timed out trying login using: {0}'.format(url))
+
+    return True
 
 
 def post_url(relUrl, params={}, data={}, useCookies=True):
     """
     Sends POST request to the relative URL of www.lendingclub.com
     """
-    global cookies
+    global cookies, session
 
     url = '{0}{1}'.format(baseUrl, relUrl)
     try:
@@ -108,7 +173,7 @@ def post_url(relUrl, params={}, data={}, useCookies=True):
         cookies = cookies if useCookies else {}
 
         logger.debug('POSTING {0}'.format(url))
-        req = requests.post(url, params=params, data=data, cookies=cookies, headers=requestHeaders)
+        req = session.post(url, params=params, data=data, cookies=cookies)
         return req
 
     except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
@@ -123,7 +188,7 @@ def get_url(relUrl, params={}, useCookies=True):
     """
     Sends GET request to the relative URL of www.lendingclub.com
     """
-    global cookies
+    global cookies, session
 
     url = '{0}{1}'.format(baseUrl, relUrl)
     try:
@@ -131,7 +196,7 @@ def get_url(relUrl, params={}, useCookies=True):
         cookies = cookies if useCookies else {}
 
         logger.debug('GETTING {0}'.format(url))
-        req = requests.get(url, params=params, cookies=cookies, headers=requestHeaders)
+        req = session.get(url, params=params, cookies=cookies)
         return req
 
     except (RequestException, ConnectionError, TooManyRedirects, HTTPError) as e:
@@ -169,7 +234,7 @@ def prompt(msg, prefill=False):
     if response.strip() == '' and prefill is not False:
         return prefill
     else:
-        return response
+        return response.strip()
 
 
 def prompt_float(msg, prefill=False):

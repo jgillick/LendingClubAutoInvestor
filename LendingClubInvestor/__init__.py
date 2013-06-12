@@ -65,7 +65,7 @@ class AutoInvestor:
 
         # Create settings object
         if settings is False:
-            self.settings = Settings(settings_dir=self.app_dir, logger=self.logger)
+            self.settings = Settings(settings_dir=self.app_dir, logger=self.logger, verbose=self.verbose)
         else:
             self.settings = settings
         self.settings.investor = self  # create a link back to this instance
@@ -96,10 +96,12 @@ class AutoInvestor:
             self.settings.get_auth_settings()
 
             print '\nAuthenticating...'
-            if self.authenticate():
+            try:
+                self.authenticate()
                 break
-            else:
-                print "\nCould not authenticate, please try again"
+            except Exception as e:
+                print '\nLogin failed: {0}'.format(str(e))
+                print "Please try again\n"
 
         print 'Success!\n'
         print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
@@ -511,7 +513,7 @@ class AutoInvestor:
                 self.logger.error('Could not get cash balance: {0}'.format(response.text))
 
         except Exception as e:
-            self.logger.error('Could not get the cash balance on the account: {0}\nJSON: {1}'.format(str(e), response.text))
+            self.logger.error('Could not get the cash balance on the account: Error: {0}\nJSON: {1}'.format(str(e), response.text))
 
         return cash
 
@@ -522,10 +524,11 @@ class AutoInvestor:
         """
 
         # Authenticate
-        if self.authenticate():
+        try:
+            self.authenticate()
             self.logger.info('Authenticated')
-        else:
-            self.logger.error('Could not authenticate')
+        except Exception as e:
+            self.logger.error('Could not authenticate: {0}'.format(e))
             return False
 
         # Try to invest
@@ -651,43 +654,12 @@ class AutoInvestor:
         Returns True/False
         """
         try:
-            payload = {
-                'login_email': self.settings.auth['email'],
-                'login_password': self.settings.auth['pass']
-            }
-            response = util.post_url('/account/login.action', data=payload, useCookies=False)
-
-            # Login endpoint
-            endpoint = response.url.split('/')[-1]
-            self.logger.debug('Redirected to {0}'.format(response.url))
-
-            # Parse any errors
-            soup = BeautifulSoup(response.text, "html5lib")
-            errors = soup.find(id='master_error-list')
-            if errors:
-                errors = errors.text.strip()
-
-                # Remove extra spaces and newlines from error message
-                errors = re.sub('\t+', '', errors)
-                errors = re.sub('\s*\n+\s*', ' * ', errors)
-
-                if errors == '':
-                    errors = None
-
-            # Login succeeded
-            if (response.status_code == 200 or response.status_code == 302) and errors is None and endpoint != 'login.action':
+            if util.start_session(self.settings.auth['email'], self.settings.auth['pass']):
                 self.authed = True
-                util.cookies = response.cookies
                 return True
-
-            # Failed messaging
-            self.logger.debug('Authentication failed. Status code: {0}, Cookies: {1}'.format(response.status_code, str(response.cookies.keys())))
-            self.logger.error('Login error message: {0}'.format(errors))
-
         except Exception as e:
-            self.logger.warning('Authentication failed! {0}'.format(str(e)))
-
-        return False
+            raise e
+        raise Exception('An unknown error occurred')
 
     def get_portfolio_list(self):
         """
