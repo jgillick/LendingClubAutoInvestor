@@ -48,7 +48,7 @@ class Settings():
     # Auth settings
     auth = {
         'email': False,
-        'pass': False
+        'pass': None
     }
 
     # Defines the investment funding settings
@@ -78,16 +78,22 @@ class Settings():
         }
     }
 
+    # If the investing settings have been updated
+    # False: The settings are still set to the defaults
+    # True: The settings have been updated by the user or file
+    is_dirty = False
+
     # Default user settings
     user_settings = {
         'frequency': 60,
         'alert': False
     }
 
-    def __init__(self, settings_dir=None, logger=False, verbose=False):
+    def __init__(self, investing_file=None, settings_dir=None, logger=False, verbose=False):
         """
-        settings_dir is the directory that will be used to
-        save the user and investment settings files
+        file: A JSON file will the settings to use. Setting this parameter will prevent
+              saving settings to the cache file.
+        settings_dir: The directory that will be used to save the user and investment settings files
         """
         self.settings_dir = settings_dir
 
@@ -98,23 +104,35 @@ class Settings():
             self.logger = logger
 
         # Create the settings directory, if it doesn't exist
-        if self.settings_dir and not os.path.exists(self.settings_dir):
+        if investing_file is None and self.settings_dir is not None and not os.path.exists(self.settings_dir):
             os.mkdir(self.settings_dir)
 
         self.get_user_settings()
-        self.load_investment_settings_file()
+        self.load_investment_settings_file(file_path=investing_file)
 
-    def __getitem__(self, arg):
+    def __getitem__(self, key):
         """
         Attempts to a value from one of the dictionaries
         """
-        if arg in self.investing:
-            return self.investing[arg]
-        if arg in self.user_settings:
-            return self.user_settings[arg]
-        if arg in self.auth:
-            return self.auth[arg]
+        if key in self.investing:
+            return self.investing[key]
+        if key in self.user_settings:
+            return self.user_settings[key]
+        if key in self.auth:
+            return self.auth[key]
         return None
+
+    def __setitem__(self, key, value):
+        """
+        Add a setting
+        """
+        if key in self.investing:
+            self.investing[key] = value
+            self.is_dirty = True
+        elif key in self.user_settings:
+            self.user_settings[key] = value
+        elif key in self.auth:
+            self.auth[key] = value
 
     def get_user_settings(self):
         """
@@ -136,11 +154,23 @@ class Settings():
         self.user_settings = yaml.load(open(file_path).read())
         return self.user_settings
 
+    def process_json(self, jsonStr):
+        """
+        Preprocess a JSON string.
+        Currently this simply removes all single line comments
+        """
+
+        # Remove comment lines
+        jsonStr = re.sub(r'\n\s*//.*?\n', '\n', jsonStr)
+
+        return jsonStr
+
+
     def save(self):
         """
         Save the investment settings dict to a file
         """
-        if not self.settings_dir:
+        if self.settings_dir is None:
             return
 
         try:
@@ -160,51 +190,70 @@ class Settings():
         except Exception as e:
             self.logger.warning('Could not save the investment settings to file: {0}'.format(str(e)))
 
-    def load_investment_settings_file(self):
+    def migrate_settings(self):
+        """
+        Migrate old settings to what they should be now
+        """
+
+        # Investing filters
+        if type(self.investing['filters']) is dict:
+            if '36month' in self.investing['filters']:
+                self.investing['filters']['term36month'] = self.investing['filters']['36month']
+                del self.investing['filters']['36month']
+
+            if '60month' in self.investing['filters']:
+                self.investing['filters']['term60month'] = self.investing['filters']['60month']
+                del self.investing['filters']['60month']
+            if 'funding_progress' not in self.investing['filters']:
+                self.investing['filters']['funding_progress'] = 0
+
+    def load_investment_settings_file(self, file_path=None):
         """
         Returned the saved settings used last time this program was run
         """
-        if not self.settings_dir:
-            return
+        if not self.settings_dir and file_path is None:
+            return False
 
-        investing_file = os.path.join(self.settings_dir, self.investing_file)
-        if os.path.exists(investing_file):
-            self.logger.debug('Loading saved investment settings file')
+        if file_path is None:
+            file_path = os.path.join(self.settings_dir, self.investing_file)
+
+        if os.path.exists(file_path):
+            self.logger.debug('Loading investment settings file: {0}'.format(file_path))
             try:
                 # Read file
-                f = open(investing_file, 'r')
+                f = open(file_path, 'r')
                 jsonStr = f.read()
                 f.close()
 
-                self.logger.debug('Saved investment settings: {0}'.format(jsonStr))
+                self.logger.debug('Investment settings JSON: {0}'.format(jsonStr))
 
                 # Convert JSON to dictionary
+                jsonStr = self.process_json(jsonStr)
                 saved_settings = json.loads(jsonStr)
 
                 # Add values to dictionary
                 for key, value in self.investing.iteritems():
                     if key in saved_settings:
                         self.investing[key] = saved_settings[key]
+                        self.is_dirty = True;
 
                 # Add email to auth
                 if 'email' in saved_settings:
                     self.auth['email'] = saved_settings['email']
 
                 # Migrations
-                if '36month' in self.investing['filters']:
-                    self.investing['filters']['term36month'] = self.investing['filters']['36month']
-                    del self.investing['filters']['36month']
+                self.migrate_settings()
 
-                if '60month' in self.investing['filters']:
-                    self.investing['filters']['term60month'] = self.investing['filters']['60month']
-                    del self.investing['filters']['60month']
-                if 'funding_progress' not in self.investing['filters']:
-                    self.investing['filters']['funding_progress'] = 0
+                return True
 
             except Exception as e:
                 self.logger.debug('Could not read investment settings file: {0}'.format(str(e)))
+                print jsonStr
+                raise Exception('Could not process file \'{0}\': {1}'.format(file_path, str(e)))
         else:
-            self.logger.debug('No saved investment settings file to load')
+            self.logger.debug('The file \'{0}\' doesn\'t exist'.format(file_path))
+
+        return False
 
     def get_auth_settings(self):
         """
@@ -249,7 +298,7 @@ class Settings():
 
             # Interest rate grades
             if self.investing['filters']['grades']['All']:
-                print '   + All interest rate grades'
+                print '  + All interest rate grades'
             else:
                 grades = []
                 for grade in self.investing['filters']['grades']:
@@ -258,6 +307,13 @@ class Settings():
                 print '  + Interest rates grades: {0}'.format(', '.join(sorted(grades)))
 
         print '=========={0}==========\n'.format(''.center(len(title), '='))
+
+    def confirm_settings(self):
+        self.show_summary()
+        if util.prompt_yn('Would you like to continue with these settings?', 'y'):
+            self.save()
+        else:
+            self.get_investment_settings()
 
     def get_investment_settings(self):
         """
@@ -316,12 +372,7 @@ class Settings():
             self.get_filter_settings()
 
         # Review summary
-        self.show_summary()
-        if util.prompt_yn('Would you like to continue with these settings?', 'y'):
-            self.save()
-        else:
-            self.get_investment_settings()
-
+        self.confirm_settings()
         return True
 
     def get_filter_settings(self):

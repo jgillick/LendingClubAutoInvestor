@@ -95,12 +95,96 @@ To stop the daemon run::
 
     $ lcinvestor stop
 
+
+With a JSON config file
+-----------------------
+
+To bypass all the prompts, you can pass it a JSON config file that has your investment criteria::
+
+    $ lcinvestor --config ./investing.json
+
+Here's an exammple of the file, will all the possible values::
+
+  {
+    // The minimum amount of cash you want to invest each round
+    "minCash": 1000,
+
+    //  The minimum average interest rate portfolio that you will accept
+    "minPercent": 16.5,
+
+    //  The maximum average interest rate portfolio that you will accept
+    "maxPercent": 19,
+
+    // The named portfolio to put all new investments in
+    "portfolio": "Autoinvested",
+
+    // Advanced filters
+    "filters": {
+
+      // Exclude loans you're already invested in
+      "exclude_existing": true,
+
+      // A loan note must be at least this percent funded
+      "funding_progress": 90,
+
+      // Include 36 month term loans
+      "term60month": true,
+
+      // Include 36 month term loans
+      "term36month": true,
+
+      // Loan grades
+      "grades": {
+        // Allow any loan grade
+        "All": true,
+
+        // Or select which loan grades you will accept, A - G
+        "A": false,
+        "B": false,
+        "C": false,
+        "D": false,
+        "E": false,
+        "F": false,
+        "G": false
+      }
+    }
+  }
+
+Bypass all prompting
+--------------------
+If you want to bypass all the prompts that lcinvestor uses to get your login and investment criteria, use the `--email`, `--pass`, `--config` and `--quiet` command line flags::
+
+    $ lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+
+As a deamon, add `start` to the command::
+
+    $ lcinvestor start --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+
 Help and Usage
 --------------
 
 To see the usage info::
 
     $ lcinvestor --help
+
+    usage: Usage: lcinvestor [options] [start/stop]
+
+    daemon arguments:
+      start/stop/status     Start or stop the this as a background task (daemon).
+                            Use status to see the current daemon status
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --email EMAIL         The email used to login to LendingClub
+      --pass pass           Your LendingClub password.
+      -c CONFIG_FILE, --config CONFIG_FILE
+                            A JSON file with the investment settings you want to
+                            use.
+      -q, --quiet           Don't show a confirmation prompt with your investment
+                            settings. Must be used with --config.
+      --version             Print the lcinvestor version number
+      -v, --verbose         Verbose output
+
 
 
 Options

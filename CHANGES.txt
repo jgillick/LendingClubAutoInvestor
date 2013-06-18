@@ -1,3 +1,6 @@
+v1.5b 2013-06-18:
+  * New command line flags: email, pass, config and quiet
+
 v1.4 2013-06-12:
   * Major bug fix: Updates to requests 1.2.3 broke authentication.
   * Update authentication methods

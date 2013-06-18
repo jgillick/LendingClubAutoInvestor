@@ -86,6 +86,10 @@ def create_logger(verbose=False):
     return logger
 
 
+def set_logger(loggerObj):
+    global logger
+    logger = loggerObj
+
 def is_site_available():
     """
     Returns true if we can access LendingClub.com

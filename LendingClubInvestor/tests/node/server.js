@@ -95,10 +95,20 @@ function processGET(request, response){
       response.end();
     break;
 
+    // Summary
+    case '/account/summary.action':
+      // Empty response
+      response.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+      response.write("Summary Page");
+      response.end();
+
     // Cash balance JSON
     case '/browse/cashBalanceAj.action':
       outputFileAndEnd('cashBalanceAj.json', response);
     break;
+
     // Porfolio list
     case '/data/portfolioManagement':
       if(query['method'] && query['method'] == 'getLCPortfolios'){
@@ -108,12 +118,14 @@ function processGET(request, response){
         response.end();
       }
     break;
+
     // Start order
     case '/portfolio/recommendPortfolio.action':
       // Empty response
       response.write("");
       response.end();
     break;
+
     // Place order and strut token
     case '/portfolio/placeOrder.action':
       outputFileAndEnd('placeOrder.html', response);
@@ -144,17 +156,18 @@ function processPOST(request, response, data){
     // Login - if the email and password match, set the cookie
     case '/account/login.action':
       if(data.login_email == authEmail && data.login_password == authPassword){
-        response.writeHead(200, {
+        response.writeHead(302, {
           'Set-Cookie': 'LC_FIRSTNAME='+ authName,
-          'Content-Type': 'text/plain'
+          'Content-Type': 'text/plain',
+          'location': '/account/summary.action'
         });
       }
       else{
-        response.writeHead(501, {
-          'Content-Type': 'text/plain'
+        response.writeHead(200, {
+          'Content-Type': 'text/html'
         });
+        outputFileAndEnd('login_fail.html', response);
       }
-      response.write("Test Response");
       response.end();
     break;
 

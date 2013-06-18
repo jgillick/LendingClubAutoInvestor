@@ -177,6 +177,7 @@ class TestInvestorFlow(unittest.TestCase):
         logger = TestLogger()
         base_dir = os.path.dirname(os.path.realpath(__file__))
         app_dir = os.path.join(base_dir, '.autoinvestor_test')
+        util.set_logger(logger)
 
         # Create investor objects
         self.settings = Settings(settings_dir=app_dir, logger=logger)
@@ -234,11 +235,22 @@ class TestInvestorFlow(unittest.TestCase):
         self.settings.investing['filters']['grades']['G'] = False
 
     def test_login(self):
-        self.assertTrue(self.investor.authenticate())
+        try:
+            self.investor.authenticate()
+            success = True
+        except Exception:
+            success = False
+        self.assertTrue(success)
 
     def test_invalid_login(self):
         self.settings.auth['email'] = 'wrong@wrong.com'
-        self.assertFalse(self.investor.authenticate())
+        try:
+            self.investor.authenticate()
+            success = True
+        except Exception:
+            success = False
+        self.assertFalse(success)
+
 
     def test_get_cash_balance(self):
         self.assertEqual(self.investor.get_cash_balance(), 216.02)
@@ -490,7 +502,7 @@ class TestLogger():
         self.warnings.append(msg)
 
     def debug(self, msg):
-        #print 'INVESTOR DEBUG: {0}'.format(msg)
+        print 'INVESTOR DEBUG: {0}'.format(msg)
         self.debugs.append(msg)
 
 

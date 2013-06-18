@@ -78,19 +78,12 @@ class AutoInvestor:
         version_file = os.path.join(this_path, 'VERSION')
         return open(version_file).read()
 
-    def setup(self):
-        """
-        Setup the investor to run
-        """
-
+    def welcome_screen(self):
         print "\n///--------------------------- $$$ ---------------------------\\\\\\"
         print '|    Welcome to the unofficial Lending Club investment tool     |'
         print " ---------------------------------------------------------------- \n"
 
-        if self.verbose:
-            print 'VERBOSE OUTPUT IS ON\n'
-
-        # Auth settings
+    def get_auth(self):
         print 'To start, we need to log you into Lending Club (your password will never be saved)\n'
         while True:
             self.settings.get_auth_settings()
@@ -102,6 +95,18 @@ class AutoInvestor:
             except Exception as e:
                 print '\nLogin failed: {0}'.format(str(e))
                 print "Please try again\n"
+
+    def setup(self):
+        """
+        Setup the investor to run
+        """
+        self.welcome_screen()
+
+        if self.verbose:
+            print 'VERBOSE OUTPUT IS ON\n'
+
+        # Auth settings
+        self.get_auth()
 
         print 'Success!\n'
         print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
@@ -547,7 +552,7 @@ class AutoInvestor:
                 self.logger.debug('Cash to invest: ${0} (of ${1} total)'.format(cash, allCash))
                 if cash >= self.settings['minCash']:
                     print " $ $ $ $ $ $ $ $ $ $"  # Create break in logs
-                    self.logger.info('Attempting to investing ${0}'.format(cash))
+                    self.logger.info('Attempting to invest ${0}'.format(cash))
                     option = self.get_investment_option(cash)
 
                     # Submit investment
@@ -653,12 +658,9 @@ class AutoInvestor:
         Attempt to authenticate the user with the email/pass in the investing dictionary.
         Returns True/False
         """
-        try:
-            if util.start_session(self.settings.auth['email'], self.settings.auth['pass']):
-                self.authed = True
-                return True
-        except Exception as e:
-            raise e
+        if util.start_session(self.settings.auth['email'], self.settings.auth['pass']):
+            self.authed = True
+            return True
         raise Exception('An unknown error occurred')
 
     def get_portfolio_list(self):
