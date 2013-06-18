@@ -103,7 +103,7 @@ You can pass a JSON config file that has your investment criteria and bypass mos
 
     $ lcinvestor --config ./investing.json
 
-Here's an exammple file::
+Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are here purely for explanation)::
 
   {
     // The minimum amount of cash you want to invest each round
