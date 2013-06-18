@@ -115,7 +115,8 @@ Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are 
     // The maximum average interest rate portfolio that you will accept
     "maxPercent": 19,
 
-    // The named portfolio to put all new investments in (Only alphanumeric, spaces , _ - # and . are allowed.)
+    // The named portfolio to put all new investments in
+    // (only alphanumeric, spaces , _ - # and . are allowed)
     "portfolio": "Autoinvested",
 
     // Advanced filters
