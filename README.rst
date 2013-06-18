@@ -99,11 +99,11 @@ To stop the daemon run::
 With a JSON config file
 -----------------------
 
-To bypass all the prompts, you can pass it a JSON config file that has your investment criteria::
+You can pass a JSON config file that has your investment criteria and bypass most of the prompts::
 
     $ lcinvestor --config ./investing.json
 
-Here's an exammple of the file, will all the possible values::
+Here's an exammple file::
 
   {
     // The minimum amount of cash you want to invest each round
@@ -150,9 +150,9 @@ Here's an exammple of the file, will all the possible values::
     }
   }
 
-Bypass all prompting
---------------------
-If you want to bypass all the prompts that lcinvestor uses to get your login and investment criteria, use the `--email`, `--pass`, `--config` and `--quiet` command line flags::
+To bypass ALL prompting
+-----------------------
+You can also pass the command your email and password to bypass all prompts and have it start running right away::
 
     $ lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
 
