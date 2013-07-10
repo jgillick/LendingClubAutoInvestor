@@ -44,18 +44,15 @@ Feel free to fork and contribute!
 Requirements
 ============
 
+* lendingclub
 * python-daemon
-* requests
-* beautifulsoup4
-* html5lib
 * argparse
-* pybars
 * pyyaml
 * pause
 
 These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`_::
 
-    sudo pip install python-daemon requests beautifulsoup4 html5lib argparse pybars pyyaml pause
+    sudo pip install lendingclub python-daemon argparse pyyaml pause
 
 
 Install

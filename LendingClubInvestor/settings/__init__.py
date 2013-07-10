@@ -29,6 +29,7 @@ import os
 import shutil
 import yaml
 import json
+from lendingclub.filters import Filter
 from LendingClubInvestor import util
 
 
@@ -57,26 +58,11 @@ class Settings():
         'minPercent': False,
         'maxPercent': False,
         'portfolio': False,
-        'filters': False
+        'filters': Filter()
     }
 
     # Default investment filters
-    filters = {
-        'exclude_existing': True,
-        'term36month': True,
-        'term60month': True,
-        'funding_progress': 0,
-        'grades': {
-            'All': True,
-            'A': True,
-            'B': True,
-            'C': True,
-            'D': True,
-            'E': True,
-            'F': True,
-            'G': True
-        }
-    }
+    filters = Filter()
 
     # If the investing settings have been updated
     # False: The settings are still set to the defaults
@@ -190,22 +176,28 @@ class Settings():
         except Exception as e:
             self.logger.warning('Could not save the investment settings to file: {0}'.format(str(e)))
 
-    def migrate_settings(self):
+    def migrate_settings(self, settings):
         """
         Migrate old settings to what they should be now
         """
 
         # Investing filters
-        if type(self.investing['filters']) is dict:
-            if '36month' in self.investing['filters']:
-                self.investing['filters']['term36month'] = self.investing['filters']['36month']
-                del self.investing['filters']['36month']
+        if type(settings['filters']) is Filter:
+            if '36month' in settings['filters']:
+                settings['filters']['term']['Year3'] = settings['filters']['36month']
+                del settings['filters']['36month']
+            if 'term36month' in settings['filters']:
+                settings['filters']['term']['Year3'] = settings['filters']['term36month']
+                del settings['filters']['term36month']
 
-            if '60month' in self.investing['filters']:
-                self.investing['filters']['term60month'] = self.investing['filters']['60month']
-                del self.investing['filters']['60month']
-            if 'funding_progress' not in self.investing['filters']:
-                self.investing['filters']['funding_progress'] = 0
+            if '60month' in settings['filters']:
+                settings['filters']['term']['Year5'] = settings['filters']['60month']
+                del settings['filters']['60month']
+            if 'term60month' in settings['filters']:
+                settings['filters']['term']['Year5'] = settings['filters']['term60month']
+                del settings['filters']['term60month']
+
+        return settings
 
     def load_investment_settings_file(self, file_path=None):
         """
@@ -231,6 +223,9 @@ class Settings():
                 jsonStr = self.process_json(jsonStr)
                 saved_settings = json.loads(jsonStr)
 
+                # Migrations
+                saved_settings = self.migrate_settings(saved_settings)
+
                 # Add values to dictionary
                 for key, value in self.investing.iteritems():
                     if key in saved_settings:
@@ -240,9 +235,6 @@ class Settings():
                 # Add email to auth
                 if 'email' in saved_settings:
                     self.auth['email'] = saved_settings['email']
-
-                # Migrations
-                self.migrate_settings()
 
                 return True
 
@@ -290,9 +282,9 @@ class Settings():
 
             # Loan term
             terms = []
-            if 'term36month' in self.investing['filters'] and self.investing['filters']['term36month']:
+            if self.investing['filters']['term']['Year3'] is True:
                 terms.append('36')
-            if 'term60month' in self.investing['filters'] and self.investing['filters']['term60month']:
+            if self.investing['filters']['term']['Year5'] is True:
                 terms.append('60')
             print '  + Term: {0} months'.format(' & '.join(terms))
 
@@ -398,11 +390,11 @@ class Settings():
         print 'Choose term (36 - 60 month)'
 
         while(True):
-            filters['term36month'] = util.prompt_yn('Include 36 month term loans?', filters['term36month'])
-            filters['term60month'] = util.prompt_yn('Include 60 month term loans?', filters['term60month'])
+            filters['term']['Year3'] = util.prompt_yn('Include 36 month term loans?', filters['term36month'])
+            filters['term']['Year5'] = util.prompt_yn('Include 60 month term loans?', filters['term60month'])
 
             # Validate 1 was chosen
-            if not filters['term36month'] and not filters['term60month']:
+            if not filters['term']['Year3'] and not filters['term']['Year5']:
                 print 'You have to AT LEAST choose one term length!'
             else:
                 break
@@ -464,7 +456,7 @@ class Settings():
                     default_indicator = '> '
                     default_index = str(i)
 
-                print '{0}{1}: {2}'.format(default_indicator, i, folio)
+                print '{0}{1}: {2}'.format(default_indicator, i, folio['portfolioName'])
                 i += 1
 
             other_index = i
@@ -517,7 +509,7 @@ class Settings():
 
             # Existing portfolio
             if choice < other_index:
-                return folios[choice - 1]
+                return folios[choice - 1]['portfolioName']
 
         except Exception as e:
             self.logger.error(e)
