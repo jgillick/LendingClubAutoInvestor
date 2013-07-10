@@ -29,7 +29,7 @@ import os
 import shutil
 import yaml
 import json
-from lendingclub.filters import Filter
+from lendingclub.filters import Filter, SavedFilter
 from LendingClubInvestor import util
 
 
@@ -54,15 +54,12 @@ class Settings():
 
     # Defines the investment funding settings
     investing = {
-        'minCash': 500,
-        'minPercent': False,
-        'maxPercent': False,
-        'portfolio': False,
+        'min_cash': 500,
+        'min_percent': False,
+        'max_percent': False,
+        'portfolio': None,
         'filters': Filter()
     }
-
-    # Default investment filters
-    filters = Filter()
 
     # If the investing settings have been updated
     # False: The settings are still set to the defaults
@@ -151,7 +148,6 @@ class Settings():
 
         return jsonStr
 
-
     def save(self):
         """
         Save the investment settings dict to a file
@@ -182,11 +178,15 @@ class Settings():
         """
 
         # Investing filters
-        if type(settings['filters']) is Filter:
+        if settings['filters']:
+
+            if 'term' not in settings['filters']:
+                settings['filters']['term'] = {}
+
             if '36month' in settings['filters']:
                 settings['filters']['term']['Year3'] = settings['filters']['36month']
                 del settings['filters']['36month']
-            if 'term36month' in settings['filters']:
+            if 'term60month' in settings['filters']:
                 settings['filters']['term']['Year3'] = settings['filters']['term36month']
                 del settings['filters']['term36month']
 
@@ -196,6 +196,17 @@ class Settings():
             if 'term60month' in settings['filters']:
                 settings['filters']['term']['Year5'] = settings['filters']['term60month']
                 del settings['filters']['term60month']
+
+            if 'minPercent' in settings:
+                settings['min_percent'] = settings['minPercent']
+                del settings['minPercent']
+            if 'maxPercent' in settings:
+                settings['max_percent'] = settings['maxPercent']
+                del settings['maxPercent']
+
+            if 'minCash' in settings:
+                settings['min_cash'] = settings['minCash']
+                del settings['minCash']
 
         return settings
 
@@ -230,18 +241,27 @@ class Settings():
                 for key, value in self.investing.iteritems():
                     if key in saved_settings:
                         self.investing[key] = saved_settings[key]
-                        self.is_dirty = True;
+                        self.is_dirty = True
 
                 # Add email to auth
                 if 'email' in saved_settings:
                     self.auth['email'] = saved_settings['email']
 
-                return True
-
             except Exception as e:
                 self.logger.debug('Could not read investment settings file: {0}'.format(str(e)))
                 print jsonStr
                 raise Exception('Could not process file \'{0}\': {1}'.format(file_path, str(e)))
+
+            # Create filter object
+            try:
+                if self.investing['filters'] and len(self.investing['filters']) > 0:
+                    self.investing['filters'] = Filter(filters=self.investing['filters'])
+                else:
+                    self.investing['filters'] = False
+            except Exception as e:
+                raise Exception('Could load filter settings: {0}'.format(str(e)))
+
+            return True
         else:
             self.logger.debug('The file \'{0}\' doesn\'t exist'.format(file_path))
 
@@ -262,8 +282,8 @@ class Settings():
 
         print '\n========= {0} ========='.format(title)
         print 'Invest ALL available funds with the following criteria\n'
-        print 'With at LEAST ${0} available to invest'.format(self.investing['minCash'])
-        print 'Select a portfolio with an average interest rate between {0}% - {1}%'.format(self.investing['minPercent'], self.investing['maxPercent'])
+        print 'With at LEAST ${0} available to invest'.format(self.investing['min_cash'])
+        print 'Select a portfolio with an average interest rate between {0}% - {1}%'.format(self.investing['min_percent'], self.investing['max_percent'])
 
         if self.investing['portfolio']:
             print 'Add investments to: "{0}"'.format(self.investing['portfolio'])
@@ -317,8 +337,8 @@ class Settings():
         print '---------'
         print 'The auto investor will automatically try to invest ALL available cash into a diversified portfolio'
         while(True):
-            self.investing['minCash'] = util.prompt_int('What\'s the MINIMUM amount of cash you want to invest each round?', self.investing['minCash'])
-            if self.investing['minCash'] < 25:
+            self.investing['min_cash'] = util.prompt_int('What\'s the MINIMUM amount of cash you want to invest each round?', self.investing['min_cash'])
+            if self.investing['min_cash'] < 25:
                 print '\nYou cannot invest less than $25. Please try again.'
             else:
                 break
@@ -326,21 +346,21 @@ class Settings():
         # Min/max percent
         print '---------'
         while(True):
-            print 'When auto investing, the LendingClub API will provide us a list of possible investment portfolios available at that moment.'
+            print 'When auto investing, the LendingClub API will search for diversified investment portfolios available at that moment.'
             print 'To pick the appropriate one for you, it needs to know what the minimum and maximum AVERAGE interest rate value you will accept.'
             print 'The investment option closest to the maximum value will be chosen and all your available cash will be invested in it.\n'
 
-            self.investing['minPercent'] = util.prompt_float('What\'s MININUM average interest rate portfolio that you will accept?', self.investing['minPercent'])
+            self.investing['min_percent'] = util.prompt_float('What\'s MININUM average interest rate portfolio that you will accept?', self.investing['min_percent'])
 
             # Max percent should default to being larger than the min percent
-            if self.investing['maxPercent'] is False or self.investing['maxPercent'] < self.investing['minPercent']:
-                self.investing['maxPercent'] = self.investing['minPercent'] + 1
-            self.investing['maxPercent'] = util.prompt_float('What\'s MAXIMUM average interest rate portfolio that you will accept?', self.investing['maxPercent'])
+            if self.investing['max_percent'] is False or self.investing['max_percent'] < self.investing['min_percent']:
+                self.investing['max_percent'] = self.investing['min_percent'] + 1
+            self.investing['max_percent'] = util.prompt_float('What\'s MAXIMUM average interest rate portfolio that you will accept?', self.investing['max_percent'])
 
             # Validation
-            if self.investing['maxPercent'] < self.investing['minPercent']:
+            if self.investing['max_percent'] < self.investing['min_percent']:
                 print 'The maximum value must be larger than, or equal to, the minimum value. Please try again.'
-            elif self.investing['maxPercent'] == self.investing['minPercent']:
+            elif self.investing['max_percent'] == self.investing['min_percent']:
                 print 'It\'s very uncommon to find an available portfolio that will match an exact percent.'
                 if not util.prompt_yn('Would you like to specify a broader range?'):
                     break
@@ -358,10 +378,17 @@ class Settings():
         else:
             self.investing['portfolio'] = False
 
-        # Advanced filter settings
         print '\n---------'
-        if util.prompt_yn('Would you like to set advanced filter settings?', self.investing['filters'] is not False):
-            self.get_filter_settings()
+
+        # Using saved filter
+        if type(self.investing['filters']) is SavedFilter:
+            print 'Using saved filter {0}: {1}'.format(self.investing['filters'].id, self.investing['filters'].name)
+            util.prompt('FYI: No custom advanced filters can best set while using a saved filter [enter]')
+
+        # Advanced filter settings
+        else:
+            if util.prompt_yn('Would you like to set advanced filter settings?', self.investing['filters'] is not False):
+                self.get_filter_settings()
 
         # Review summary
         self.confirm_settings()
@@ -371,9 +398,7 @@ class Settings():
         """
         Setup the advanced portfolio filters (terms, grades, existing notes, etc.)
         """
-        filters = self.investing['filters']
-        if not filters:
-            filters = self.filters
+        filters = Filter()
 
         print 'The following questions are from the filters section of the Invest page on LendingClub\n'
 
@@ -390,8 +415,8 @@ class Settings():
         print 'Choose term (36 - 60 month)'
 
         while(True):
-            filters['term']['Year3'] = util.prompt_yn('Include 36 month term loans?', filters['term36month'])
-            filters['term']['Year5'] = util.prompt_yn('Include 60 month term loans?', filters['term60month'])
+            filters['term']['Year3'] = util.prompt_yn('Include 36 month term loans?', filters['term']['Year3'])
+            filters['term']['Year5'] = util.prompt_yn('Include 60 month term loans?', filters['term']['Year5'])
 
             # Validate 1 was chosen
             if not filters['term']['Year3'] and not filters['term']['Year5']:
@@ -437,10 +462,14 @@ class Settings():
 
         print '\nPortfolios...'
         try:
-            folios = self.investor.get_portfolio_list()
+            folios = self.investor.lc.get_portfolio_list()
+
+            # Convert object array into array of names
+            for i, folio in enumerate(folios):
+                folios[i] = folio['portfolioName']
 
             # Add default portfolio to the list
-            if default_folio is not False and default_folio not in folios:
+            if default_folio and default_folio not in folios:
                 folios.append(default_folio)
 
             # Print out the portfolio list
@@ -456,7 +485,7 @@ class Settings():
                     default_indicator = '> '
                     default_index = str(i)
 
-                print '{0}{1}: {2}'.format(default_indicator, i, folio['portfolioName'])
+                print '{0}{1}: {2}'.format(default_indicator, i, folio)
                 i += 1
 
             other_index = i
@@ -472,7 +501,7 @@ class Settings():
 
                 # If no digit was chosen, ask again unless a default portfolio is present
                 if not choice.isdigit():
-                    if default_folio is not False:
+                    if default_folio:
                         return default_folio
                     else:
                         continue
@@ -509,8 +538,7 @@ class Settings():
 
             # Existing portfolio
             if choice < other_index:
-                return folios[choice - 1]['portfolioName']
+                return folios[choice - 1]
 
         except Exception as e:
             self.logger.error(e)
-

@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
                     print '\nLast investment:'
                     print '${0} was invested at {1}'.format(last_investment['cash'], timestamp.strftime("%A %B %d, %Y at %I:%M%p"))
-                    print investor.get_option_summary(last_investment['investment'])
+                    print investor.get_order_summary(last_investment['investment'])
             else:
                 print 'The lcinvestor daemon is not running'
             exit(0)
