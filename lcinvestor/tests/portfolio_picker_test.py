@@ -9,9 +9,9 @@ import os
 sys.path.insert(0, '.')
 sys.path.insert(0, '../')
 sys.path.insert(0, '../../')
-import LendingClubInvestor
-from LendingClubInvestor.settings import Settings
-from LendingClubInvestor import util
+import lcinvestor
+from lcinvestor.settings import Settings
+from lcinvestor import util
 
 
 """
@@ -21,7 +21,7 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 app_dir = os.path.join(base_dir, '.folio_picker_test')
 
 settings = Settings(settings_dir=app_dir)
-investor = LendingClubInvestor.AutoInvestor(settings=settings, verbose=True)
+investor = lcinvestor.AutoInvestor(settings=settings, verbose=True)
 investor.get_portfolio_list = lambda: ['apple', 'bar', 'foo']
 
 

@@ -2,13 +2,13 @@ from distutils.core import setup
 
 setup(
     name='lcinvestor',
-    version=open('LendingClubInvestor/VERSION').read(),
+    version=open('lcinvestor/VERSION').read(),
     author='Jeremy Gillick',
     author_email='none@none.com',
-    packages=['LendingClubInvestor', 'LendingClubInvestor.tests', 'LendingClubInvestor.settings'],
+    packages=['lcinvestor', 'lcinvestor.tests', 'lcinvestor.settings'],
     package_data={
-        'LendingClubInvestor': ['VERSION'],
-        'LendingClubInvestor.settings': ['settings.yaml']
+        'lcinvestor': ['VERSION'],
+        'lcinvestor.settings': ['settings.yaml']
     },
     scripts=['bin/lcinvestor'],
     url='https://github.com/jgillick/LendingClubAutoInvestor',

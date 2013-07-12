@@ -12,9 +12,9 @@ from time import sleep
 sys.path.insert(0, '.')
 sys.path.insert(0, '../')
 sys.path.insert(0, '../../')
-from LendingClubInvestor import util
-from LendingClubInvestor import AutoInvestor
-from LendingClubInvestor.settings import Settings
+from lcinvestor import util
+from lcinvestor import AutoInvestor
+from lcinvestor.settings import Settings
 
 
 class TestInvestorUtils(unittest.TestCase):

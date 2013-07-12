@@ -30,8 +30,8 @@ import time
 import pause
 from time import sleep
 from lendingclub import LendingClub
-from LendingClubInvestor import util
-from LendingClubInvestor.settings import Settings
+from lcinvestor import util
+from lcinvestor.settings import Settings
 
 
 class AutoInvestor:

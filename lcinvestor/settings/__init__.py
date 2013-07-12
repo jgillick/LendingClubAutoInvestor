@@ -30,7 +30,7 @@ import shutil
 import yaml
 import json
 from lendingclub.filters import Filter, SavedFilter
-from LendingClubInvestor import util
+from lcinvestor import util
 
 
 class Settings():

@@ -41,8 +41,8 @@ if sys.argv[0][0:2] == './':
     sys.path.insert(0, '.')
     sys.path.insert(0, '../')
 
-import LendingClubInvestor
-from LendingClubInvestor.settings import Settings
+import lcinvestor
+from lcinvestor.settings import Settings
 
 investor = None
 pid_lockfile = 'lcinvestor.pid'
@@ -78,7 +78,7 @@ def get_lockfile_path():
     Get the path to the PID lockfile.
     This file will live in the default user app directory set by the AutoInvestor class
     """
-    app_dir = LendingClubInvestor.util.get_app_directory()
+    app_dir = lcinvestor.util.get_app_directory()
     path = os.path.join(app_dir, pid_lockfile)
     return path
 
@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 print str(e)
                 exit(1)
         else:
-            settings = Settings(settings_dir=LendingClubInvestor.util.get_app_directory(), verbose=isVerbose)
+            settings = Settings(settings_dir=lcinvestor.util.get_app_directory(), verbose=isVerbose)
 
         # Email and password
         if options.email is not None:
@@ -148,7 +148,7 @@ if __name__ == '__main__':
         if options.password is not None:
             settings['pass'] = options.password
 
-        investor = LendingClubInvestor.AutoInvestor(settings=settings, verbose=isVerbose)
+        investor = lcinvestor.AutoInvestor(settings=settings, verbose=isVerbose)
 
         # Print version number
         if options.version:
@@ -242,6 +242,6 @@ if __name__ == '__main__':
         else:
             investor.run()
 
-    except LendingClubInvestor.AutoInvestorError as e:
+    except lcinvestor.AutoInvestorError as e:
         print 'ERROR: {0}'.format(str(e))
         exit(1)
