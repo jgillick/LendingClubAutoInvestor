@@ -29,7 +29,7 @@ import os
 import shutil
 import yaml
 import json
-from lendingclub.filters import Filter, SavedFilter
+from lendingclub.filters import Filter, SavedFilter, SavedFilterError
 from lcinvestor import util
 
 
@@ -58,6 +58,7 @@ class Settings():
         'min_percent': False,
         'max_percent': False,
         'portfolio': None,
+        'filter_id': None,
         'filters': Filter()
     }
 
@@ -72,12 +73,14 @@ class Settings():
         'alert': False
     }
 
-    def __init__(self, investing_file=None, settings_dir=None, logger=False, verbose=False):
+    def __init__(self, investor, investing_file=None, settings_dir=None, logger=False, verbose=False):
         """
         file: A JSON file will the settings to use. Setting this parameter will prevent
               saving settings to the cache file.
         settings_dir: The directory that will be used to save the user and investment settings files
         """
+        self.is_dirty = False
+        self.investor = investor
         self.settings_dir = settings_dir
 
         # Create logger if none was passed in
@@ -91,13 +94,16 @@ class Settings():
             os.mkdir(self.settings_dir)
 
         self.get_user_settings()
-        self.load_investment_settings_file(file_path=investing_file)
+        self.load_investment_settings_file(investing_file)
 
     def __getitem__(self, key):
         """
         Attempts to a value from one of the dictionaries
         """
         if key in self.investing:
+            if key == 'filters' and self.investing['filter_id'] and type(self.investing['filters']) is not SavedFilter:
+                self.investing['filters'] = SavedFilter(self.investor.lc, self.investing['filter_id'])
+
             return self.investing[key]
         if key in self.user_settings:
             return self.user_settings[key]
@@ -156,9 +162,17 @@ class Settings():
             return
 
         try:
-            # Convert to JSON (and add email)
+
+            # Prepare JSON
             to_save = self.investing.copy()
             to_save['email'] = self.auth['email']
+
+            if type(to_save['filters']) is SavedFilter:
+                to_save['filter_id'] = to_save['filters'].id
+                to_save['filters'] = to_save['filters'].id
+            else:
+                to_save['filter_id'] = None
+
             json_out = json.dumps(to_save)
 
             # Save
@@ -180,33 +194,37 @@ class Settings():
         # Investing filters
         if settings['filters']:
 
-            if 'term' not in settings['filters']:
-                settings['filters']['term'] = {}
+            if 'filter_id' not in settings:
+                settings['filter_id'] = None
 
-            if '36month' in settings['filters']:
-                settings['filters']['term']['Year3'] = settings['filters']['36month']
-                del settings['filters']['36month']
-            if 'term60month' in settings['filters']:
-                settings['filters']['term']['Year3'] = settings['filters']['term36month']
-                del settings['filters']['term36month']
+            if type(settings['filters']) is Filter:
+                if 'term' not in settings['filters']:
+                    settings['filters']['term'] = {}
 
-            if '60month' in settings['filters']:
-                settings['filters']['term']['Year5'] = settings['filters']['60month']
-                del settings['filters']['60month']
-            if 'term60month' in settings['filters']:
-                settings['filters']['term']['Year5'] = settings['filters']['term60month']
-                del settings['filters']['term60month']
+                if '36month' in settings['filters']:
+                    settings['filters']['term']['Year3'] = settings['filters']['36month']
+                    del settings['filters']['36month']
+                if 'term60month' in settings['filters']:
+                    settings['filters']['term']['Year3'] = settings['filters']['term36month']
+                    del settings['filters']['term36month']
 
-            if 'minPercent' in settings:
-                settings['min_percent'] = settings['minPercent']
-                del settings['minPercent']
-            if 'maxPercent' in settings:
-                settings['max_percent'] = settings['maxPercent']
-                del settings['maxPercent']
+                if '60month' in settings['filters']:
+                    settings['filters']['term']['Year5'] = settings['filters']['60month']
+                    del settings['filters']['60month']
+                if 'term60month' in settings['filters']:
+                    settings['filters']['term']['Year5'] = settings['filters']['term60month']
+                    del settings['filters']['term60month']
 
-            if 'minCash' in settings:
-                settings['min_cash'] = settings['minCash']
-                del settings['minCash']
+                if 'minPercent' in settings:
+                    settings['min_percent'] = settings['minPercent']
+                    del settings['minPercent']
+                if 'maxPercent' in settings:
+                    settings['max_percent'] = settings['maxPercent']
+                    del settings['maxPercent']
+
+                if 'minCash' in settings:
+                    settings['min_cash'] = settings['minCash']
+                    del settings['minCash']
 
         return settings
 
@@ -237,6 +255,10 @@ class Settings():
                 # Migrations
                 saved_settings = self.migrate_settings(saved_settings)
 
+                # Load saved filter
+                if saved_settings['filter_id']:
+                    saved_settings['filter'] = False
+
                 # Add values to dictionary
                 for key, value in self.investing.iteritems():
                     if key in saved_settings:
@@ -254,8 +276,10 @@ class Settings():
 
             # Create filter object
             try:
-                if self.investing['filters'] and len(self.investing['filters']) > 0:
+                if self.investing['filters'] and type(self.investing['filters']) is dict and len(self.investing['filters']) > 0:
                     self.investing['filters'] = Filter(filters=self.investing['filters'])
+                elif self.investing['filter_id']:
+                    pass
                 else:
                     self.investing['filters'] = False
             except Exception as e:
@@ -289,32 +313,41 @@ class Settings():
             print 'Add investments to: "{0}"'.format(self.investing['portfolio'])
 
         # Filters
-        if self.investing['filters'] is not False:
+        if self.investing['filter_id'] and type(self['filters']) is not SavedFilter:
+            print '\n!!! ERROR !!!'
+            print 'Saved filter {0} could not be loaded from LendingClub\n'.format(self.investing['filter_id'])
+
+        elif type(self['filters']) is SavedFilter:
+            filters = self.investing['filters']
+            print 'Using saved filter "{0}" (id:{1})'.format(filters.name, filters.id)
+
+        elif self['filters'] is not False:
             print '\nAdvanced filters:'
+            filters = self['filters']
 
             # Exclude existing
-            if self.investing['filters']['exclude_existing']:
+            if filters['exclude_existing']:
                 print '  + Exclude loans already invested in'
 
             # Funding progress
-            if self.investing['filters']['funding_progress'] > 0:
-                print '  + Only loans which are at least {0}% funded'.format(self.investing['filters']['funding_progress'])
+            if filters['funding_progress'] > 0:
+                print '  + Only loans which are at least {0}% funded'.format(filters['funding_progress'])
 
             # Loan term
             terms = []
-            if self.investing['filters']['term']['Year3'] is True:
+            if filters['term']['Year3'] is True:
                 terms.append('36')
-            if self.investing['filters']['term']['Year5'] is True:
+            if filters['term']['Year5'] is True:
                 terms.append('60')
             print '  + Term: {0} months'.format(' & '.join(terms))
 
             # Interest rate grades
-            if self.investing['filters']['grades']['All']:
+            if filters['grades']['All']:
                 print '  + All interest rate grades'
             else:
                 grades = []
-                for grade in self.investing['filters']['grades']:
-                    if grade != 'All' and self.investing['filters']['grades'][grade] is True:
+                for grade in filters['grades']:
+                    if grade != 'All' and filters['grades'][grade] is True:
                         grades.append(grade)
                 print '  + Interest rates grades: {0}'.format(', '.join(sorted(grades)))
 
@@ -380,15 +413,9 @@ class Settings():
 
         print '\n---------'
 
-        # Using saved filter
-        if type(self.investing['filters']) is SavedFilter:
-            print 'Using saved filter {0}: {1}'.format(self.investing['filters'].id, self.investing['filters'].name)
-            util.prompt('FYI: No custom advanced filters can best set while using a saved filter [enter]')
-
         # Advanced filter settings
-        else:
-            if util.prompt_yn('Would you like to set advanced filter settings?', self.investing['filters'] is not False):
-                self.get_filter_settings()
+        if util.prompt_yn('Would you like to set advanced filter settings?', self.investing['filters'] is not False):
+            self.get_filter_settings()
 
         # Review summary
         self.confirm_settings()
@@ -398,8 +425,27 @@ class Settings():
         """
         Setup the advanced portfolio filters (terms, grades, existing notes, etc.)
         """
+
+        # Saved filter
+        saved_filters = self.investor.lc.get_saved_filters()
+        if len(saved_filters) > 0 and util.prompt_yn('Would you like to select one of your saved filters from LendingClub.com?', self.investing['filter_id'] is not None):
+
+            print '\nSelect a saved filter from the list below:'
+            saved = self.list_picker(
+                items=saved_filters,
+                label_key='name')
+
+            if saved is False:
+                print '\nDefine all your filters manually...'
+            else:
+                print 'Using {0}'.format(saved)
+                self.investing['filters'] = saved
+                self.investing['filter_id'] = saved.id
+                return
+
         filters = Filter()
 
+        # Manual entry
         print 'The following questions are from the filters section of the Invest page on LendingClub\n'
 
         # Existing loans
@@ -451,46 +497,95 @@ class Settings():
 
         self.investing['filters'] = filters
 
-    def portfolio_picker(self, default_folio=False):
+    def portfolio_picker(self, default=None):
         """
-        Load existing portfolios and let the user choose one or create a new one
-        default_folio is the name of the default portfolio, or the one that was used last time.
+        Shows a list picker of porfolios
+
+        Parameters:
+            default -- The portfolio name to have selected by default
         """
 
-        if not self.investor:
-            return False
+        folios = self.investor.lc.get_portfolio_list(names_only=True)
 
         print '\nPortfolios...'
+        folios.sort()
+        while True:
+            if len(folios) == 0:
+                picked = util.prompt('Enter the name for your new portfolio')
+            else:
+                picked = self.list_picker(
+                    items=folios,
+                    default=default,
+                    allow_other=True,
+                    other_prompt='Enter the name for your new portfolio')
+
+            # Validate custom value
+            if picked and picked not in folios and re.search('[^a-zA-Z0-9 ,_\-#\.]', picked):
+                print 'The portfolio name \'{0}\' is not valid! Only alphanumeric, spaces , _ - # and . are allowed.'.format(picked)
+            else:
+                break
+
+        return picked
+
+    def list_picker(self, items, default=None, label_key=None, allow_other=None, other_prompt='Enter a value'):
+        """
+        Shows a list of items the user can pick from.
+
+        Parameters
+            items -- The list of items to display. This is either a list of strings or
+                objects. If objects, the label_key must be set
+            default -- The item that should be selected by default.
+            label_key -- If items is a list of objects, this is the key or attribute of the object with the
+                label to show for each item.
+            allow_other -- If an 'Other' option should be allowed. If selected the user will be able to type
+                their own item, which will be returned.
+            other_prompt -- The prompt to show when the user selects 'Other'
+
+        Returns The item chosen from the list, a string if the user choose 'Other' or False if
+        the user cancels the selection
+        """
+        assert len(items) > 0 or default is not False, 'You cannot select from a list without any items'
+
         try:
-            folios = self.investor.lc.get_portfolio_list()
 
-            # Convert object array into array of names
-            for i, folio in enumerate(folios):
-                folios[i] = folio['portfolioName']
+            # Is the default item in the list
+            if default and default not in items:
+                items.append(default)
 
-            # Add default portfolio to the list
-            if default_folio and default_folio not in folios:
-                folios.append(default_folio)
+            string_list = type(items[0]) is str
 
-            # Print out the portfolio list
-            folios.sort()
+            # Print out the list
             i = 1
-            other_index = 0
+            other_index = -1
             cancel_index = 0
-            default_indicator = ''
             default_index = False
-            for folio in folios:
-                default_indicator = '  '
-                if default_folio == folio:
-                    default_indicator = '> '
+            for item in items:
+                gutter = '  '
+
+                # Get item label
+                if string_list:
+                    label = item
+                else:
+                    label = str(item)
+                    if label_key:
+                        if type(item) is dict and label_key in item:
+                            label = item[label_key]
+                        elif hasattr(item, label_key):
+                            label = getattr(item, label_key)
+
+
+                # Selected indicator
+                if default == item:
+                    gutter = '> '
                     default_index = str(i)
 
-                print '{0}{1}: {2}'.format(default_indicator, i, folio)
+                print '{0}{1}: {2}'.format(gutter, i, label)
                 i += 1
 
-            other_index = i
-            print '  {0}: Other'.format(other_index)
-            i += 1
+            if allow_other:
+                other_index = i
+                print '  {0}: Other'.format(other_index)
+                i += 1
 
             cancel_index = i
             print '  {0}: Cancel'.format(cancel_index)
@@ -501,32 +596,29 @@ class Settings():
 
                 # If no digit was chosen, ask again unless a default portfolio is present
                 if not choice.isdigit():
-                    if default_folio:
-                        return default_folio
-                    else:
+                    if not default_index:
                         continue
+                    else:
+                        return default
+
                 choice = int(choice)
 
-                # No zero
-                if choice == 0:
+                # Out of range
+                if choice == 0 or choice > cancel_index:
                     continue
 
-                # Existing portfolio chosen
-                if choice <= len(folios):
-                    break
+                # List item chosen
+                if choice <= len(items):
+                    return items[choice - 1]
 
                 # Other
                 elif choice == other_index:
                     while(True):
-                        other = util.prompt('Enter the name for your new portfolio')
+                        other = util.prompt(other_prompt)
 
                         # Empty string entered, show list again
                         if other.strip() == '':
                             break
-
-                        # Invalid character
-                        elif re.search('[^a-zA-Z0-9 ,_\-#\.]', other):
-                            print 'The portfolio name \'{0}\' is not valid! Only alphanumeric, spaces , _ - # and . are allowed.'.format(other)
 
                         # Return custom portfolio name
                         else:
@@ -535,10 +627,6 @@ class Settings():
                 # Cancel
                 else:
                     return False
-
-            # Existing portfolio
-            if choice < other_index:
-                return folios[choice - 1]
 
         except Exception as e:
             self.logger.error(e)

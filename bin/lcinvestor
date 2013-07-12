@@ -87,9 +87,9 @@ if __name__ == '__main__':
 
     # Process command flags
     if hasDaemonRunner:
-        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [daemon_command]', description=description)
+        parser = argparse.ArgumentParser(usage='%(prog)s [options] [start/stop/status]', description=description)
     else:
-        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options]', description=description)
+        parser = argparse.ArgumentParser(usage='%(prog)s [options]', description=description)
 
     parser.add_argument('--email', action='store', dest='email', default=None, help='The email used to login to LendingClub')
     parser.add_argument('--pass', action='store', dest='password', metavar='pass', default=None, help='Your LendingClub password.')
@@ -124,6 +124,7 @@ if __name__ == '__main__':
 
     # Start program
     try:
+        investor = lcinvestor.AutoInvestor(verbose=isVerbose)
 
         # Create settings from config file
         if options.config_file is not None:
@@ -131,24 +132,20 @@ if __name__ == '__main__':
                 print 'The file \'{0}\' doesn\'t exists'.format(options.config_file)
                 exit(1)
             try:
-                settings = Settings(investing_file=options.config_file, verbose=isVerbose)
-                if not settings.is_dirty:
+                investor.settings.load_investment_settings_file(options.config_file)
+                if not investor.settings.is_dirty:
                     print 'Your config file did not set anything.'
                     exit(1)
 
             except Exception as e:
                 print str(e)
                 exit(1)
-        else:
-            settings = Settings(settings_dir=lcinvestor.util.get_app_directory(), verbose=isVerbose)
 
         # Email and password
         if options.email is not None:
-            settings['email'] = options.email
+            investor.settings['email'] = options.email
         if options.password is not None:
-            settings['pass'] = options.password
-
-        investor = lcinvestor.AutoInvestor(settings=settings, verbose=isVerbose)
+            investor.settings['pass'] = options.password
 
         # Print version number
         if options.version:
@@ -179,13 +176,13 @@ if __name__ == '__main__':
             sys.argv = [sys.argv[0], action]
 
             # Prompt the user for all the investment settings
-            if options.config_file is None and settings.is_dirty is False:
+            if options.config_file is None and investor.settings.is_dirty is False:
                 investor.setup()
 
             # Settings have already been set from the config flag, carry on without as many prompts
             else:
                 investor.welcome_screen()
-                if settings['email'] is None or settings['pass'] is None:
+                if investor.settings['email'] is None or investor.settings['pass'] is None:
                     investor.get_auth()
                 else:
                     try:

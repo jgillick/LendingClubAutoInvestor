@@ -50,11 +50,9 @@ class AutoInvestor:
     # The file that the summary from the last investment is saved to
     last_investment_file = 'last_investment.json'
 
-    def __init__(self, settings=False, verbose=False):
+    def __init__(self, verbose=False):
         """
         Create an AutoInvestor instance
-         - settings should be a Settings object that will manage getting
-           and saving all user and investment settings.
          - Set verbose to True if you want to see debugging logs
         """
         self.verbose = verbose
@@ -67,10 +65,7 @@ class AutoInvestor:
             self.lc.set_logger(self.logger)
 
         # Create settings object
-        if settings is False:
-            self.settings = Settings(settings_dir=self.app_dir, logger=self.logger, verbose=self.verbose)
-        else:
-            self.settings = settings
+        self.settings = Settings(investor=self, settings_dir=self.app_dir, logger=self.logger, verbose=self.verbose)
 
         self.settings.investor = self  # create a link back to this instance
 

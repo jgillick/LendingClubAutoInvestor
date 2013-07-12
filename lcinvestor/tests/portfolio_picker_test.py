@@ -22,27 +22,40 @@ app_dir = os.path.join(base_dir, '.folio_picker_test')
 
 settings = Settings(settings_dir=app_dir)
 investor = lcinvestor.AutoInvestor(settings=settings, verbose=True)
-investor.get_portfolio_list = lambda: ['apple', 'bar', 'foo']
-
+investor.lc.get_portfolio_list = lambda names_only: ['apple', 'bar', 'foo']
 
 """
 With default option
 """
+print '\nWith a default option'
 while True:
-    chosen = settings.portfolio_picker('default')
+    chosen = settings.portfolio_picker('The default')
     print 'You chose: {0}\n'.format(chosen)
 
-    if not util.prompt_yn('Again?', 'y'):
+    if not util.prompt_yn('Again?', 'n'):
         break
 
 """
 No default option
 """
+print '\nWithout a default option'
 while True:
     chosen = settings.portfolio_picker()
     print 'You chose: {0}\n'.format(chosen)
 
-    if not util.prompt_yn('Again?', 'y'):
+    if not util.prompt_yn('Again?', 'n'):
+        break
+
+"""
+No options
+"""
+print '\nWithout any options'
+investor.lc.get_portfolio_list = lambda names_only: []
+while True:
+    chosen = settings.portfolio_picker()
+    print 'You chose: {0}\n'.format(chosen)
+
+    if not util.prompt_yn('Again?', 'n'):
         break
 
 

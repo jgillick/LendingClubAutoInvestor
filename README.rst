@@ -116,6 +116,10 @@ Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are 
     // (only alphanumeric, spaces , _ - # and . are allowed)
     "portfolio": "Autoinvested",
 
+    // Saved filter ID (from LendingClub.com)
+    // NOTE: If set, this will override everything in the 'filters' hash, below
+    //"filter_id": 123456,
+
     // Advanced filters
     "filters": {
 
@@ -152,26 +156,29 @@ To bypass ALL prompting
 -----------------------
 You can also pass the command your email and password to bypass all prompts and have it start running right away::
 
-    lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor --config=./investing.json --email=you@email.com --pass=mysecret --quiet
 
-As a daemon, add `start` to the command::
+To run it as a daemon, add `start` to the command::
 
-    lcinvestor start --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor start --config=./investing.json --email=you@email.com --pass=mysecret --quiet
 
 Help and Usage
 --------------
 
-To see the usage info::
+To see the usage info, type ``lcinvestor --help``::
 
     lcinvestor --help
 
-    usage: Usage: lcinvestor [options] [start/stop]
+    usage: lcinvestor [options] [start/stop/status]
 
-    daemon arguments:
+    A program that watches your LendingClub account and automatically invests cash
+    as it becomes available based on your personalized investment preferences.
+
+    Daemon Commands:
       start/stop/status     Start or stop the this as a background task (daemon).
                             Use status to see the current daemon status
 
-    optional arguments:
+    Options:
       -h, --help            show this help message and exit
       --email EMAIL         The email used to login to LendingClub
       --pass pass           Your LendingClub password.
