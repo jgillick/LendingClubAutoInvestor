@@ -1,7 +1,7 @@
 Lending Club Auto Investing Tool
 ================================
 
-A simple python tool used to watch your LendingClub account and automatically invest and reinvest cash as it becomes available based on a series of personalized investment options and settings.
+A program that watches your LendingClub account and automatically invests cash as it becomes available based on your personalized investment preferences.
 
 
 Disclaimer
@@ -73,24 +73,24 @@ Running
 Foreground
 ----------
 
-To start the tool in the foreground::
+To start the tool in the foreground, open a command line terminal and enter::
 
-    $ lcinvestor
+    lcinvestor
 
-The script will run continuously and print all the output to the screen until you exit it with CTRL+C.
+The script will run continuously and print all the output to the screen until you exit with CTRL+C.
 
 Background (daemon)
 -------------------
 
 To run it as a background daemon (does not work on Windows)::
 
-    $ lcinvestor start
+    lcinvestor start
 
 All output will be sent to ``/var/log/daemon.log``.
 
 To stop the daemon run::
 
-    $ lcinvestor stop
+    lcinvestor stop
 
 
 With a JSON config file
@@ -98,7 +98,7 @@ With a JSON config file
 
 You can pass a JSON config file that has your investment criteria and bypass most of the prompts::
 
-    $ lcinvestor --config ./investing.json
+    lcinvestor --config ./investing.json
 
 Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are here purely for explanation)::
 
@@ -152,18 +152,18 @@ To bypass ALL prompting
 -----------------------
 You can also pass the command your email and password to bypass all prompts and have it start running right away::
 
-    $ lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
 
-As a deamon, add `start` to the command::
+As a daemon, add `start` to the command::
 
-    $ lcinvestor start --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor start --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
 
 Help and Usage
 --------------
 
 To see the usage info::
 
-    $ lcinvestor --help
+    lcinvestor --help
 
     usage: Usage: lcinvestor [options] [start/stop]
 
