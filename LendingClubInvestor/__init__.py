@@ -62,6 +62,10 @@ class AutoInvestor:
         self.app_dir = util.get_app_directory()
         self.lc = LendingClub()
 
+        # Set logger on lc
+        if self.verbose:
+            self.lc.set_logger(self.logger)
+
         # Create settings object
         if settings is False:
             self.settings = Settings(settings_dir=self.app_dir, logger=self.logger, verbose=self.verbose)
@@ -196,16 +200,24 @@ class AutoInvestor:
 
                 try:
                     # Find investment portfolio
-                    portfolio = self.lc.build_portfolio(cash, self.settings['min_percent'], self.settings['max_percent'], self.settings['filters'])
-                    if portfolio:
+                    portfolio = self.lc.build_portfolio(cash,
+                        min_percent=self.settings['min_percent'],
+                        max_percent=self.settings['max_percent'],
+                        filters=self.settings['filters'],
+                        do_not_clear_staging=True)
 
+                    if portfolio:
                         self.logger.info('Auto investing ${0} at {1}%...'.format(cash, portfolio['percentage']))
                         sleep(5)  # last chance to cancel
 
                         # Invest
                         assign_to = self.settings['portfolio']
+
                         order = self.lc.start_order()
                         order.add_batch(portfolio)
+
+                        order._Order__already_staged = True  # Don't try this at home kids
+                        order._Order__i_know_what_im_doing = True  # Seriously, don't do it
                         order_id = order.execute(portfolio_name=assign_to)
 
                         # Success! Show summary and save the order
