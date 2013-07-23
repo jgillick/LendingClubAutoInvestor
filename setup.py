@@ -2,13 +2,13 @@ from distutils.core import setup
 
 setup(
     name='lcinvestor',
-    version=open('LendingClubInvestor/VERSION').read(),
+    version=open('lcinvestor/VERSION').read(),
     author='Jeremy Gillick',
     author_email='none@none.com',
-    packages=['LendingClubInvestor', 'LendingClubInvestor.tests', 'LendingClubInvestor.settings'],
+    packages=['lcinvestor', 'lcinvestor.tests', 'lcinvestor.settings'],
     package_data={
-        'LendingClubInvestor': ['VERSION'],
-        'LendingClubInvestor.settings': ['settings.yaml']
+        'lcinvestor': ['VERSION'],
+        'lcinvestor.settings': ['settings.yaml']
     },
     scripts=['bin/lcinvestor'],
     url='https://github.com/jgillick/LendingClubAutoInvestor',
@@ -16,10 +16,8 @@ setup(
     description='A simple tool that will watch your LendingClub account and automatically invest cash as it becomes available.',
     long_description=open('README.rst').read(),
     install_requires=[
+        "lendingclub >= 0.1",
         "python-daemon >= 1.6",
-        "requests >= 1.2.3",
-        "beautifulsoup4 >= 4.1.3",
-        "html5lib >= 0.95",
         "argparse >= 1.2.1",
         "pybars >= 0.0.4",
         "pyyaml >= 3.09",

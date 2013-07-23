@@ -27,23 +27,22 @@ THE SOFTWARE.
 import sys
 import os
 import signal
-import sys
 from datetime import datetime
 import argparse
 
 try:
     from daemon import runner
-    hasDeamonRunner = True
+    hasDaemonRunner = True
 except ImportError:
-    hasDeamonRunner = False
+    hasDaemonRunner = False
 
 # Add local paths to support running without installing
 if sys.argv[0][0:2] == './':
     sys.path.insert(0, '.')
     sys.path.insert(0, '../')
 
-import LendingClubInvestor
-from LendingClubInvestor.settings import Settings
+import lcinvestor
+from lcinvestor.settings import Settings
 
 investor = None
 pid_lockfile = 'lcinvestor.pid'
@@ -79,18 +78,18 @@ def get_lockfile_path():
     Get the path to the PID lockfile.
     This file will live in the default user app directory set by the AutoInvestor class
     """
-    app_dir = LendingClubInvestor.util.get_app_directory()
+    app_dir = lcinvestor.util.get_app_directory()
     path = os.path.join(app_dir, pid_lockfile)
     return path
 
 if __name__ == '__main__':
+    description = 'A program that watches your LendingClub account and automatically invests cash as it becomes available based on your personalized investment preferences.'
 
     # Process command flags
-    if hasDeamonRunner:
-        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options] [start/stop]')
+    if hasDaemonRunner:
+        parser = argparse.ArgumentParser(usage='%(prog)s [options] [start/stop/status]', description=description)
     else:
-        parser = argparse.ArgumentParser(usage='Usage: %(prog)s [options]')
-
+        parser = argparse.ArgumentParser(usage='%(prog)s [options]', description=description)
 
     parser.add_argument('--email', action='store', dest='email', default=None, help='The email used to login to LendingClub')
     parser.add_argument('--pass', action='store', dest='password', metavar='pass', default=None, help='Your LendingClub password.')
@@ -99,12 +98,16 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
 
-    if hasDeamonRunner:
+    if hasDaemonRunner:
         parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
+
+    # Change section titles
+    parser._positionals.title = 'Daemon Commands'
+    parser._optionals.title = 'Options'
 
     options = parser.parse_args()
 
-    options.action = options.__dict__['start/stop/status'] if hasDeamonRunner else []
+    options.action = options.__dict__['start/stop/status'] if hasDaemonRunner else []
     action = options.action[0] if (len(options.action) > 0) else None
     isVerbose = options.verbose
     isDaemon = (action is not None)
@@ -121,6 +124,7 @@ if __name__ == '__main__':
 
     # Start program
     try:
+        investor = lcinvestor.AutoInvestor(verbose=isVerbose)
 
         # Create settings from config file
         if options.config_file is not None:
@@ -128,24 +132,20 @@ if __name__ == '__main__':
                 print 'The file \'{0}\' doesn\'t exists'.format(options.config_file)
                 exit(1)
             try:
-                settings = Settings(investing_file=options.config_file)
-                if not settings.is_dirty:
+                investor.settings.load_investment_settings_file(options.config_file)
+                if not investor.settings.is_dirty:
                     print 'Your config file did not set anything.'
                     exit(1)
 
             except Exception as e:
                 print str(e)
                 exit(1)
-        else:
-            settings = Settings(settings_dir=LendingClubInvestor.util.get_app_directory())
 
         # Email and password
         if options.email is not None:
-            settings['email'] = options.email
+            investor.settings['email'] = options.email
         if options.password is not None:
-            settings['pass'] = options.password
-
-        investor = LendingClubInvestor.AutoInvestor(settings=settings, verbose=isVerbose)
+            investor.settings['pass'] = options.password
 
         # Print version number
         if options.version:
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 
                     print '\nLast investment:'
                     print '${0} was invested at {1}'.format(last_investment['cash'], timestamp.strftime("%A %B %d, %Y at %I:%M%p"))
-                    print investor.get_option_summary(last_investment['investment'])
+                    print investor.get_order_summary(last_investment['investment'])
             else:
                 print 'The lcinvestor daemon is not running'
             exit(0)
@@ -176,13 +176,13 @@ if __name__ == '__main__':
             sys.argv = [sys.argv[0], action]
 
             # Prompt the user for all the investment settings
-            if options.config_file is None and settings.is_dirty is False:
+            if options.config_file is None and investor.settings.is_dirty is False:
                 investor.setup()
 
             # Settings have already been set from the config flag, carry on without as many prompts
             else:
                 investor.welcome_screen()
-                if settings['email'] is None or settings['pass'] is None:
+                if investor.settings['email'] is None or investor.settings['pass'] is None:
                     investor.get_auth()
                 else:
                     try:
@@ -199,7 +199,7 @@ if __name__ == '__main__':
                     investor.settings.confirm_settings()
 
         # Start daemon
-        if hasDeamonRunner and isDaemon:
+        if hasDaemonRunner and isDaemon:
 
             # Set daemon attributes
             logfile_path = os.path.join(investor.app_dir, 'daemon.log')
@@ -239,6 +239,6 @@ if __name__ == '__main__':
         else:
             investor.run()
 
-    except LendingClubInvestor.AutoInvestorError as e:
+    except lcinvestor.AutoInvestorError as e:
         print 'ERROR: {0}'.format(str(e))
         exit(1)

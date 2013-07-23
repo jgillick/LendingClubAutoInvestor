@@ -1,7 +1,7 @@
 Lending Club Auto Investing Tool
 ================================
 
-A simple python tool used to watch your LendingClub account and automatically invest and reinvest cash as it becomes available based on a series of personalized investment options and settings.
+A program that watches your LendingClub account and automatically invests cash as it becomes available based on your personalized investment preferences.
 
 
 Disclaimer
@@ -44,18 +44,15 @@ Feel free to fork and contribute!
 Requirements
 ============
 
+* lendingclub
 * python-daemon
-* requests
-* beautifulsoup4
-* html5lib
 * argparse
-* pybars
 * pyyaml
 * pause
 
 These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`_::
 
-    sudo pip install python-daemon requests beautifulsoup4 html5lib argparse pybars pyyaml pause
+    sudo pip install lendingclub python-daemon argparse pyyaml pause
 
 
 Install
@@ -76,24 +73,24 @@ Running
 Foreground
 ----------
 
-To start the tool in the foreground::
+To start the tool in the foreground, open a command line terminal and enter::
 
-    $ lcinvestor
+    lcinvestor
 
-The script will run continuously and print all the output to the screen until you exit it with CTRL+C.
+The script will run continuously and print all the output to the screen until you exit with CTRL+C.
 
 Background (daemon)
 -------------------
 
 To run it as a background daemon (does not work on Windows)::
 
-    $ lcinvestor start
+    lcinvestor start
 
 All output will be sent to ``/var/log/daemon.log``.
 
 To stop the daemon run::
 
-    $ lcinvestor stop
+    lcinvestor stop
 
 
 With a JSON config file
@@ -101,23 +98,30 @@ With a JSON config file
 
 You can pass a JSON config file that has your investment criteria and bypass most of the prompts::
 
-    $ lcinvestor --config ./investing.json
+    lcinvestor --config ./investing.json
 
 Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are here purely for explanation)::
 
   {
     // The minimum amount of cash you want to invest each round (at least 25)
-    "minCash": 1000,
+    "min_cash": 1000,
 
     // The minimum average interest rate portfolio that you will accept
-    "minPercent": 16.5,
+    "min_percent": 16.5,
 
     // The maximum average interest rate portfolio that you will accept
-    "maxPercent": 19,
+    "max_percent": 19,
+
+    // The most you want to invest in each loan note (must be at least $25)
+    "max_per_note": 25,
 
     // The named portfolio to put all new investments in
     // (only alphanumeric, spaces , _ - # and . are allowed)
     "portfolio": "Autoinvested",
+
+    // Saved filter ID (from LendingClub.com)
+    // NOTE: If set, this will override everything in the 'filters' hash, below
+    //"filter_id": 123456,
 
     // Advanced filters
     "filters": {
@@ -155,26 +159,29 @@ To bypass ALL prompting
 -----------------------
 You can also pass the command your email and password to bypass all prompts and have it start running right away::
 
-    $ lcinvestor --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor --config=./investing.json --email=you@email.com --pass=mysecret --quiet
 
-As a deamon, add `start` to the command::
+To run it as a daemon, add `start` to the command::
 
-    $ lcinvestor start --config=./investing.json --email=you@email.com --pass=SuperSecret --quiet
+    lcinvestor start --config=./investing.json --email=you@email.com --pass=mysecret --quiet
 
 Help and Usage
 --------------
 
-To see the usage info::
+To see the usage info, type ``lcinvestor --help``::
 
-    $ lcinvestor --help
+    lcinvestor --help
 
-    usage: Usage: lcinvestor [options] [start/stop]
+    usage: lcinvestor [options] [start/stop/status]
 
-    daemon arguments:
+    A program that watches your LendingClub account and automatically invests cash
+    as it becomes available based on your personalized investment preferences.
+
+    Daemon Commands:
       start/stop/status     Start or stop the this as a background task (daemon).
                             Use status to see the current daemon status
 
-    optional arguments:
+    Options:
       -h, --help            show this help message and exit
       --email EMAIL         The email used to login to LendingClub
       --pass pass           Your LendingClub password.

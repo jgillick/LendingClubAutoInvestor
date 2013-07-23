@@ -9,9 +9,9 @@ import os
 sys.path.insert(0, '.')
 sys.path.insert(0, '../')
 sys.path.insert(0, '../../')
-import LendingClubInvestor
-from LendingClubInvestor.settings import Settings
-from LendingClubInvestor import util
+import lcinvestor
+from lcinvestor.settings import Settings
+from lcinvestor import util
 
 
 """
@@ -21,28 +21,41 @@ base_dir = os.path.dirname(os.path.realpath(__file__))
 app_dir = os.path.join(base_dir, '.folio_picker_test')
 
 settings = Settings(settings_dir=app_dir)
-investor = LendingClubInvestor.AutoInvestor(settings=settings, verbose=True)
-investor.get_portfolio_list = lambda: ['apple', 'bar', 'foo']
-
+investor = lcinvestor.AutoInvestor(settings=settings, verbose=True)
+investor.lc.get_portfolio_list = lambda names_only: ['apple', 'bar', 'foo']
 
 """
 With default option
 """
+print '\nWith a default option'
 while True:
-    chosen = settings.portfolio_picker('default')
+    chosen = settings.portfolio_picker('The default')
     print 'You chose: {0}\n'.format(chosen)
 
-    if not util.prompt_yn('Again?', 'y'):
+    if not util.prompt_yn('Again?', 'n'):
         break
 
 """
 No default option
 """
+print '\nWithout a default option'
 while True:
     chosen = settings.portfolio_picker()
     print 'You chose: {0}\n'.format(chosen)
 
-    if not util.prompt_yn('Again?', 'y'):
+    if not util.prompt_yn('Again?', 'n'):
+        break
+
+"""
+No options
+"""
+print '\nWithout any options'
+investor.lc.get_portfolio_list = lambda names_only: []
+while True:
+    chosen = settings.portfolio_picker()
+    print 'You chose: {0}\n'.format(chosen)
+
+    if not util.prompt_yn('Again?', 'n'):
         break
 
 
