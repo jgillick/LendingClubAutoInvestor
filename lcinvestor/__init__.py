@@ -196,6 +196,7 @@ class AutoInvestor:
                 try:
                     # Find investment portfolio
                     portfolio = self.lc.build_portfolio(cash,
+                        max_per_note=self.settings['max_per_note'],
                         min_percent=self.settings['min_percent'],
                         max_percent=self.settings['max_percent'],
                         filters=self.settings['filters'],

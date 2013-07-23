@@ -57,6 +57,7 @@ class Settings():
         'min_cash': 500,
         'min_percent': False,
         'max_percent': False,
+        'max_per_note': 25,
         'portfolio': None,
         'filter_id': None,
         'filters': Filter()
@@ -226,6 +227,10 @@ class Settings():
                     settings['min_cash'] = settings['minCash']
                     del settings['minCash']
 
+        # Max per note
+        if 'max_per_note' not in settings:
+            settings['max_per_note'] = 25
+
         return settings
 
     def load_investment_settings_file(self, file_path=None):
@@ -305,9 +310,10 @@ class Settings():
         """
 
         print '\n========= {0} ========='.format(title)
-        print 'Invest ALL available funds with the following criteria\n'
+        print 'Invest ALL available funds...\n'
         print 'With at LEAST ${0} available to invest'.format(self.investing['min_cash'])
         print 'Select a portfolio with an average interest rate between {0}% - {1}%'.format(self.investing['min_percent'], self.investing['max_percent'])
+        print 'Invest as much as ${0} per loan note'.format(self.investing['max_per_note'])
 
         if self.investing['portfolio']:
             print 'Add investments to: "{0}"'.format(self.investing['portfolio'])
@@ -319,7 +325,7 @@ class Settings():
 
         elif type(self['filters']) is SavedFilter:
             filters = self.investing['filters']
-            print 'Using saved filter "{0}" (id:{1})'.format(filters.name, filters.id)
+            print '\nUsing saved filter "{0}" (id:{1})'.format(filters.name, filters.id)
 
         elif self['filters'] is not False:
             print '\nAdvanced filters:'
@@ -400,6 +406,18 @@ class Settings():
             else:
                 break
 
+        # Max per note
+        print '---------'
+        while(True):
+            self.investing['max_per_note'] = util.prompt_int('How much are you willing to invest per loan note (max per note)?', self.investing['max_per_note'])
+
+            if self.investing['max_per_note'] < 25:
+                print 'You have to invest AT LEAST $25 per note.'
+                self.investing['max_per_note'] = 25
+            else:
+                break
+
+
         # Portfolio
         print '---------'
         folioOption = False
@@ -430,10 +448,17 @@ class Settings():
         saved_filters = self.investor.lc.get_saved_filters()
         if len(saved_filters) > 0 and util.prompt_yn('Would you like to select one of your saved filters from LendingClub.com?', self.investing['filter_id'] is not None):
 
+            # Get the selected one from list (has to be same-same object)
+            selected = None
+            if self.investing['filter_id']:
+                selected = self.investing['filter_id']
+
             print '\nSelect a saved filter from the list below:'
             saved = self.list_picker(
                 items=saved_filters,
-                label_key='name')
+                default=selected,
+                label_key='name',
+                id_key='id')
 
             if saved is False:
                 print '\nDefine all your filters manually...'
@@ -527,16 +552,17 @@ class Settings():
 
         return picked
 
-    def list_picker(self, items, default=None, label_key=None, allow_other=None, other_prompt='Enter a value'):
+    def list_picker(self, items, default=None, label_key=None, id_key=None, allow_other=None, other_prompt='Enter a value'):
         """
         Shows a list of items the user can pick from.
 
         Parameters
             items -- The list of items to display. This is either a list of strings or
                 objects. If objects, the label_key must be set
-            default -- The item that should be selected by default.
+            default -- The item or ID that should be selected by default.
             label_key -- If items is a list of objects, this is the key or attribute of the object with the
                 label to show for each item.
+            id_key -- If items is a list of objects, this defined what the ID key/attribute is on each object.
             allow_other -- If an 'Other' option should be allowed. If selected the user will be able to type
                 their own item, which will be returned.
             other_prompt -- The prompt to show when the user selects 'Other'
@@ -547,12 +573,13 @@ class Settings():
         assert len(items) > 0 or default is not False, 'You cannot select from a list without any items'
 
         try:
+            string_list = False
+            if (len(items) > 0 and type(items[0]) in [str, unicode]) or (len(items) == 0 and type(default) is str):
+                string_list = True
 
-            # Is the default item in the list
-            if default and default not in items:
+            # If the default item isn't in the list of strings, add it
+            if default and default not in items and string_list:
                 items.append(default)
-
-            string_list = type(items[0]) is str
 
             # Print out the list
             i = 1
@@ -561,6 +588,7 @@ class Settings():
             default_index = False
             for item in items:
                 gutter = '  '
+                is_default = False
 
                 # Get item label
                 if string_list:
@@ -573,11 +601,21 @@ class Settings():
                         elif hasattr(item, label_key):
                             label = getattr(item, label_key)
 
-
                 # Selected indicator
-                if default == item:
-                    gutter = '> '
-                    default_index = str(i)
+                if default is not None:
+
+                    if string_list and default == item:
+                        is_default = True
+
+                    elif id_key is not None:
+                        if type(item) is dict and id_key in item and item[id_key] == default:
+                            is_default = True
+                        elif hasattr(item, label_key) and getattr(item, id_key) == default:
+                            is_default = True
+
+                    if is_default:
+                        gutter = '> '
+                        default_index = str(i)
 
                 print '{0}{1}: {2}'.format(gutter, i, label)
                 i += 1
