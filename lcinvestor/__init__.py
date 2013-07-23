@@ -194,12 +194,17 @@ class AutoInvestor:
                 self.logger.info('Attempting to invest ${0}'.format(cash))
 
                 try:
+                    # Refresh saved filter
+                    filters = self.settings['filters']
+                    if type(filters) is SavedFilter:
+                        filters.reload()
+
                     # Find investment portfolio
                     portfolio = self.lc.build_portfolio(cash,
                         max_per_note=self.settings['max_per_note'],
                         min_percent=self.settings['min_percent'],
                         max_percent=self.settings['max_percent'],
-                        filters=self.settings['filters'],
+                        filters=filters,
                         do_not_clear_staging=True)
 
                     if portfolio:
