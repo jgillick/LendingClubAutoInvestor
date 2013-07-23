@@ -219,6 +219,11 @@ This value relates to finding a investment portfolio using the slider on the `In
 
 **Note** This does *NOT* filter out individual notes based on interest rate. It defines the average interest across all notes. Use the Advanced Filters to filter out notes by loan grade.
 
+Max per note
+------------
+
+This is the most you want to invest in any one note (at least $25). The actual amount invested in each loan will vary, but not go above this amount.
+
 Named portfolio
 ---------------
 
@@ -233,6 +238,10 @@ The advanced filters section brings in a few of the filters from the `Invest pag
 * Exclude loans you're already invested in
 * Include loans by their funding progress
 * Filter by term length (36 - 60 months)
+
+Saved Filters
+-------------
+Instead of manually defining all your filters in the program, you can define them on the site. This will give you much finer control over what you're investing in. Go to LendingClub.com, click Browse Notes and define your search filters there. When you're done click 'Save' and give this set of filters a name. Now run `lcinvestor` and when it asks you "Would you like to select one of your saved filters...", enter `Y` and choose your filter from the list.
 
 Final Review
 ------------
