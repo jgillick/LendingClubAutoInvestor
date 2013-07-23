@@ -1,3 +1,9 @@
+v2.0 20013-07-23:
+  * Moved the API to LendingClub.com into it's own standalone API module: https://github.com/jgillick/LendingClub
+  * Added support for saved filters
+  * Added max_per_note
+  * Renamed LendingClubInvestor module to lcinvestor
+
 v1.5b 2013-06-18:
   * New command line flags: email, pass, config and quiet
 

@@ -104,13 +104,16 @@ Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are 
 
   {
     // The minimum amount of cash you want to invest each round (at least 25)
-    "minCash": 1000,
+    "min_cash": 1000,
 
     // The minimum average interest rate portfolio that you will accept
-    "minPercent": 16.5,
+    "min_percent": 16.5,
 
     // The maximum average interest rate portfolio that you will accept
-    "maxPercent": 19,
+    "max_percent": 19,
+
+    // The most you want to invest in each loan note (must be at least $25)
+    "max_per_note": 25,
 
     // The named portfolio to put all new investments in
     // (only alphanumeric, spaces , _ - # and . are allowed)
