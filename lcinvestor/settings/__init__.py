@@ -216,18 +216,17 @@ class Settings():
                     settings['filters']['term']['Year5'] = settings['filters']['term60month']
                     del settings['filters']['term60month']
 
-                if 'minPercent' in settings:
-                    settings['min_percent'] = settings['minPercent']
-                    del settings['minPercent']
-                if 'maxPercent' in settings:
-                    settings['max_percent'] = settings['maxPercent']
-                    del settings['maxPercent']
+        if 'minPercent' in settings:
+            settings['min_percent'] = settings['minPercent']
+            del settings['minPercent']
+        if 'maxPercent' in settings:
+            settings['max_percent'] = settings['maxPercent']
+            del settings['maxPercent']
 
-                if 'minCash' in settings:
-                    settings['min_cash'] = settings['minCash']
-                    del settings['minCash']
+        if 'minCash' in settings:
+            settings['min_cash'] = settings['minCash']
+            del settings['minCash']
 
-        # Max per note
         if 'max_per_note' not in settings:
             settings['max_per_note'] = 25
 
