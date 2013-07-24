@@ -1,2 +1,2 @@
 include *.txt *.rst
-recursive-include docs *.txt *.rst
+recursive-include lcinvestor *.txt *.rst *.html *.json VERSION
