@@ -30,6 +30,7 @@ import time
 import pause
 from time import sleep
 from lendingclub import LendingClub
+from lendingclub.filters import *
 from lcinvestor import util
 from lcinvestor.settings import Settings
 

@@ -1,4 +1,7 @@
-v2.0 20013-07-23:
+v2.0.1 2013-07-24:
+  * Fix a bug when investing with SavedFilter. Since lendingclub.filters was not imported, it could not reload the SavedFilter prior to attempting to invest.
+
+v2.0 2013-07-23:
   * Moved the API to LendingClub.com into it's own standalone API module: https://github.com/jgillick/LendingClub
   * Added support for saved filters
   * Added max_per_note
