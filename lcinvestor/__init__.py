@@ -216,7 +216,7 @@ class AutoInvestor:
                         assign_to = self.settings['portfolio']
 
                         order = self.lc.start_order()
-                        order.add_batch(portfolio)
+                        order.add_batch(portfolio['loan_fractions'])
 
                         order._Order__already_staged = True  # Don't try this at home kids
                         order._Order__i_know_what_im_doing = True  # Seriously, don't do it
