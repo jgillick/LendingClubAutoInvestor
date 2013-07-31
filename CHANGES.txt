@@ -1,3 +1,7 @@
+v2.0.2 2013-07-31:
+  * Update call to add_batch to send loan_fractions instead of full portfolio object.
+  * Update to lendingclub 0.1.2
+
 v2.0.1 2013-07-24:
   * Fix a bug when investing with SavedFilter. Since lendingclub.filters was not imported, it could not reload the SavedFilter prior to attempting to invest.
 
