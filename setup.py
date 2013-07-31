@@ -16,7 +16,7 @@ setup(
     description='A simple tool that will watch your LendingClub account and automatically invest cash as it becomes available.',
     long_description=open('README.rst').read(),
     install_requires=[
-        "lendingclub >= 0.1",
+        "lendingclub >= 0.1.2",
         "python-daemon >= 1.6",
         "argparse >= 1.2.1",
         "pybars >= 0.0.4",
