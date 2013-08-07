@@ -175,6 +175,30 @@ def prompt_yn(msg, default=None):
         elif response in ['n', 'no']:
             return False
 
+
+def nearest_25(num):
+    """
+    Round the number to the nearest whole number dividable by 25.
+    This will round up or down, to find the closest number
+
+    Examples:
+    ---------
+
+        >>> nearest_25(5)
+        0
+        >>> nearest_25(25)
+        25
+        >>> nearest_25(40)
+        50
+        >>> nearest_25(810)
+        800
+    """
+    num = float(num) / 100
+    num = round(num * 4) / 4
+    num = num * 100
+    return int(num)
+
+
 def currency_to_float(cashValue):
     """
     Converts a currency value, with or without symbols, to a floating point number,

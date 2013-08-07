@@ -192,7 +192,6 @@ class AutoInvestor:
 
                 # Invest
                 self.logger.info(" $ $ $ $ $ $ $ $ $ $")  # Create break in logs
-                self.logger.info('Attempting to invest ${0}'.format(cash))
 
                 try:
                     # Refresh saved filter
@@ -200,13 +199,53 @@ class AutoInvestor:
                     if type(filters) is SavedFilter:
                         filters.reload()
 
-                    # Find investment portfolio
-                    portfolio = self.lc.build_portfolio(cash,
-                        max_per_note=self.settings['max_per_note'],
-                        min_percent=self.settings['min_percent'],
-                        max_percent=self.settings['max_percent'],
-                        filters=filters,
-                        do_not_clear_staging=True)
+                    # Find investment portfolio, starting will all your cash,
+                    # down to the minimum you're willing to invest
+                    # No more than 10 searches
+                    i = 0
+                    portfolio = None
+                    decrement = None
+                    while portfolio is None and cash >= self.settings['min_cash'] and i < 10:
+                        i += 1
+                        try:
+
+                            self.logger.info('Searching for a portfolio for ${0}'.format(cash))
+                            portfolio = self.lc.build_portfolio(cash,
+                                max_per_note=self.settings['max_per_note'],
+                                min_percent=self.settings['min_percent'],
+                                max_percent=self.settings['max_percent'],
+                                filters=filters,
+                                do_not_clear_staging=True)
+
+                        except LendingClubError as e:
+                            self.logger.info('Could not find any matching portfolios for ${0}'.format(cash))
+
+                            # Create decrement value that will search up to 5 more times
+                            if decrement is None:
+                                delta = self.settings['min_cash'] - cash
+
+                                if delta < 25:
+                                    break
+                                elif delta <= 100:
+                                    decrement = 25
+                                else:
+                                    decrement = delta / 5
+
+                            # Just to be safe
+                            if decrement < 10:
+                                break
+
+                            # We are at our lowest
+                            if cash == self.settings['min_cash']:
+                                break
+
+                            # New amount to search for
+                            cash -= decrement
+                            if cash < self.settings['min_cash']:
+                                cash = self.settings['min_cash']
+                            else:
+                                cash = util.nearest_25(cash)
+
 
                     if portfolio:
                         self.logger.info('Auto investing ${0} at {1}%...'.format(cash, portfolio['percentage']))
@@ -229,7 +268,7 @@ class AutoInvestor:
 
                         self.save_last_investment(cash, portfolio, order_id, portfolio_name=assign_to)
                     else:
-                        self.logger.warning('No investment options are available at this time for portfolios between {0}% - {1}% -- Trying again in {2} minutes'.format(self.settings['min_percent'], self.settings['max_percent'], self.settings['frequency']))
+                        self.logger.warning('No investment portfolios matched your filters at this time -- Trying again in {2} minutes'.format(self.settings['min_percent'], self.settings['max_percent'], self.settings['frequency']))
 
                 except Exception as e:
                     self.logger.error('Failed trying to invest: {0}'.format(str(e)))
