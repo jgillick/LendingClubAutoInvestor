@@ -197,10 +197,12 @@ class AutoInvestor:
                     # down to the minimum you're willing to invest
                     # No more than 10 searches
                     i = 0
-                    portfolio = None
+                    portfolio = False
                     decrement = None
-                    while portfolio is None and cash >= self.settings['min_cash'] and i < 10:
+                    while portfolio is False and cash >= self.settings['min_cash'] and i < 10:
                         i += 1
+
+                        # Try to find a portfolio
                         try:
 
                             self.logger.info('Searching for a portfolio for ${0}'.format(cash))
@@ -212,11 +214,15 @@ class AutoInvestor:
                                 do_not_clear_staging=True)
 
                         except LendingClubError as e:
+                            pass
+
+                        # Try a lower amount of cash to invest
+                        if not portfolio:
                             self.logger.info('Could not find any matching portfolios for ${0}'.format(cash))
 
                             # Create decrement value that will search up to 5 more times
                             if decrement is None:
-                                delta = self.settings['min_cash'] - cash
+                                delta = cash - self.settings['min_cash']
 
                                 if delta < 25:
                                     break
@@ -225,12 +231,12 @@ class AutoInvestor:
                                 else:
                                     decrement = delta / 5
 
-                            # Just to be safe
+                            # Just to be safe, shouldn't decrement in $10 increments
                             if decrement < 10:
                                 break
 
                             # We are at our lowest
-                            if cash == self.settings['min_cash']:
+                            if cash <= self.settings['min_cash']:
                                 break
 
                             # New amount to search for
