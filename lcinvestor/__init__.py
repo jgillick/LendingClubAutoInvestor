@@ -99,16 +99,10 @@ class AutoInvestor:
         """
         Setup the investor to run
         """
-        self.welcome_screen()
-
         if self.verbose:
             print 'VERBOSE OUTPUT IS ON\n'
 
-        # Auth settings
-        self.get_auth()
-
-        print 'Success!\n'
-        print 'You have ${0} in your account, free to invest\n'.format(self.get_cash_balance())
+        print 'You have ${0} in your account, free to invest\n'.format(self.lc.get_cash_balance())
 
         # Investment settings
         print 'Now that you\'re signed in, let\'s define what you want to do\n'

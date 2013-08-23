@@ -121,6 +121,9 @@ if __name__ == '__main__':
     if action is not None and action not in ['start', 'stop', 'status']:
         print '\'{0}\' is not a supported action!'.format(action)
         exit(1)
+    if options.quiet and options.config_file is not None:
+        print 'Can not use --quiet without --config'
+        exit(1)
 
     # Start program
     try:
@@ -196,7 +199,7 @@ if __name__ == '__main__':
                 if options.quiet:
                     investor.settings.show_summary()
                 else:
-                    investor.settings.confirm_settings()
+                    investor.setup()
 
         # Start daemon
         if hasDaemonRunner and isDaemon:
