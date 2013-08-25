@@ -17,7 +17,7 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "lendingclub >= 0.1.2",
-        "python-daemon >= 1.6",
+        # "python-daemon >= 1.6",
         "argparse >= 1.2.1",
         "pybars >= 0.0.4",
         "pyyaml >= 3.09",
