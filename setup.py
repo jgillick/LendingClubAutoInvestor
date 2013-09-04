@@ -10,16 +10,15 @@ setup(
         'lcinvestor': ['VERSION'],
         'lcinvestor.settings': ['settings.yaml']
     },
-    scripts=['bin/lcinvestor'],
+    scripts=['bin/lcinvestor', 'bin/lcinvestor.bat'],
     url='https://github.com/jgillick/LendingClubAutoInvestor',
     license=open('LICENSE.txt').read(),
     description='A simple tool that will watch your LendingClub account and automatically invest cash as it becomes available.',
     long_description=open('README.rst').read(),
     install_requires=[
-        "lendingclub >= 0.1.2",
+        "lendingclub >= 0.1.3",
         # "python-daemon >= 1.6",
         "argparse >= 1.2.1",
-        "pybars >= 0.0.4",
         "pyyaml >= 3.09",
         "pause >= 0.1.2"
     ],
