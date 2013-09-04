@@ -78,10 +78,10 @@ Or manually (assuming all required modules are installed on your system)::
 Instructions for Windows
 ========================
 
-# Make sure you have Python 2.7 and pip installed
-  * http://www.anthonydebarros.com/2011/10/15/setting-up-python-in-windows-7/
-# Open the command prompt: Start Menu > Accessories > Command Prompt
-# Run the following command:: ``pip install lcinvestor``
+1) Make sure you have Python 2.7 and pip installed
+   * http://www.anthonydebarros.com/2011/10/15/setting-up-python-in-windows-7/
+2) Open the command prompt: Start Menu > Accessories > Command Prompt
+3) Run the following command:: ``pip install lcinvestor``
 
 
 Running lcinvestor
