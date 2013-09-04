@@ -118,7 +118,9 @@ You can pass a JSON config file that has your investment criteria and bypass mos
 
     lcinvestor --config ./investing.json
 
-Here's an exammple file (NOTE: Comments are usually not allowed in JSON and are here purely for explanation)::
+*(See the 'Saved Filters' section below, for how to use existing Lending Club saved searches).*
+
+Here's an example config file (NOTE: Comments are usually not allowed in JSON and are here purely for explanation)::
 
   {
     // The minimum amount of cash you want to invest each round (at least 25)
@@ -259,7 +261,9 @@ The advanced filters section brings in a few of the filters from the `Invest pag
 
 Saved Filters
 -------------
-Instead of manually defining all your filters in the program, you can define them on the site. This will give you much finer control over what you're investing in. Go to LendingClub.com, click Browse Notes and define your search filters there. When you're done click 'Save' and give this set of filters a name. Now run `lcinvestor` and when it asks you "Would you like to select one of your saved filters...", enter `Y` and choose your filter from the list.
+You can used any of your saved filters on Lending Club in the tool, instead of defining them manually. This will give you finer control over what you're investing in and provide search options not supported in the lcinvestor tool.
+
+Go to LendingClub.com, click Browse Notes and define your search filters there. When you're done click 'Save' and give it a name. Now run `lcinvestor` and when it asks you "Would you like to select one of your saved filters...", enter `Y` and choose your filter from the list.
 
 Final Review
 ------------
