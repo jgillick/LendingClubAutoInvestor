@@ -41,34 +41,55 @@ Find the latest version on github: https://github.com/jgillick/LendingClubAutoIn
 Feel free to fork and contribute!
 
 
+Python Modules
+================
+
 Requirements
 ============
 
-* lendingclub
-* python-daemon
+Python
+------
+Python 2.6 and 2.7 (does **NOT** support Python 3.x)
+
+Modules
+-------
+* lendingclub 0.1.3+
 * argparse
 * pyyaml
 * pause
 
-These can automatically be installed with `pip <http://www.pip-installer.org/en/latest/>`_::
+These will automatically be installed when using pip.
 
-    sudo pip install lendingclub python-daemon argparse pyyaml pause
+Optional Modules
+----------------
+* python-daemon
+
+If this is installed, lcinvestor can be run as a background deamon processes (not supported on windows).
 
 
-Install
-=======
+Install (OSX, Linux, Posix)
+===========================
 
-The tool can be run directly from the bin directory *or* installed globally, by running::
+The easiest way to install is with pip::
+
+    sudo pip install lcinvestor
+
+Or manually (assuming all required modules are installed on your system)::
 
     sudo python ./setup.py install
 
-It can also be installed with PIP::
 
-     sudo pip install lcinvestor
+Instructions for Windows
+========================
+
+# Make sure you have Python 2.7 and pip installed
+  * http://www.anthonydebarros.com/2011/10/15/setting-up-python-in-windows-7/
+# Open the command prompt: Start Menu > Accessories > Command Prompt
+# Run the following command:: ``pip install lcinvestor``
 
 
-Running
-=======
+Running lcinvestor
+==================
 
 Foreground
 ----------
@@ -79,10 +100,11 @@ To start the tool in the foreground, open a command line terminal and enter::
 
 The script will run continuously and print all the output to the screen until you exit with CTRL+C.
 
-Background (daemon)
--------------------
+Background Daemon
+------------------
+**(This is not supported by Windows)**
 
-To run it as a background daemon (does not work on Windows)::
+To run it as a background daemon::
 
     lcinvestor start
 
