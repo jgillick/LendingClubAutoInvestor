@@ -29,7 +29,7 @@ import json
 import time
 import pause
 from time import sleep
-from lendingclub import LendingClub
+from lendingclub import LendingClub, LendingClubError
 from lendingclub.filters import *
 from lcinvestor import util
 from lcinvestor.settings import Settings
@@ -92,7 +92,7 @@ class AutoInvestor:
             try:
                 return self.authenticate()
             except Exception as e:
-                print '\nLogin failed: {0}'.format(str(e))
+                print '\nLogin failed: {0}'.format(str(e.value))
                 print "Please try again\n"
 
     def setup(self):
@@ -102,16 +102,19 @@ class AutoInvestor:
         if self.verbose:
             print 'VERBOSE OUTPUT IS ON\n'
 
+        if not self.authed:
+            self.get_auth()
+
         print 'You have ${0} in your account, free to invest\n'.format(self.lc.get_cash_balance())
 
         # Investment settings
-        print 'Now that you\'re signed in, let\'s define what you want to do\n'
+        print 'Now let\'s define what you want to do'
 
         # Use the settings from last time
         if self.settings.investing['min_percent'] is not False and self.settings.investing['max_percent'] is not False:
-            self.settings.show_summary('Prior Settings')
+            self.settings.show_summary()
 
-            if util.prompt_yn('Would you like to use these settings from last time?', 'y'):
+            if util.prompt_yn('Would you like to use these settings?', 'y'):
                 self.settings.save()  # to save the email that was just entered
             else:
                 self.settings.get_investment_settings()
@@ -127,7 +130,8 @@ class AutoInvestor:
         This is just a wrapper for LendingClub.authenticate()
         Returns True or raises an exceptions
         """
-        return self.lc.authenticate(self.settings.auth['email'], self.settings.auth['pass'])
+        self.authed = self.lc.authenticate(self.settings.auth['email'], self.settings.auth['pass'])
+        return self.authed
 
     def run(self):
         """
@@ -173,7 +177,7 @@ class AutoInvestor:
             self.authenticate()
             self.logger.info('Authenticated')
         except Exception as e:
-            self.logger.error('Could not authenticate: {0}'.format(e))
+            self.logger.error('Could not authenticate: {0}'.format(e.value))
             return False
 
         # Try to invest
