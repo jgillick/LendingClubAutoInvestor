@@ -233,7 +233,7 @@ class AutoInvestor:
                                 elif delta <= 100:
                                     decrement = 25
                                 else:
-                                    decrement = delta / 5
+                                    decrement = delta / 4
 
                             # Just to be safe, shouldn't decrement in $10 increments
                             if decrement < 10:
