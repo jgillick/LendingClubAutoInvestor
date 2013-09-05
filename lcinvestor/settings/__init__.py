@@ -103,7 +103,10 @@ class Settings():
         """
         if key in self.investing:
             if key == 'filters' and self.investing['filter_id'] and type(self.investing['filters']) is not SavedFilter:
-                self.investing['filters'] = SavedFilter(self.investor.lc, self.investing['filter_id'])
+                try:
+                    self.investing['filters'] = SavedFilter(self.investor.lc, self.investing['filter_id'])
+                except Exception:
+                    self.investing['filters'] = None
 
             return self.investing[key]
         if key in self.user_settings:
@@ -320,7 +323,7 @@ class Settings():
         # Filters
         if self.investing['filter_id'] and type(self['filters']) is not SavedFilter:
             print '\n!!! ERROR !!!'
-            print 'Saved filter {0} could not be loaded from LendingClub\n'.format(self.investing['filter_id'])
+            print 'Saved filter \'{0}\' could not be loaded from LendingClub. Check the ID and try again.\n'.format(self.investing['filter_id'])
 
         elif type(self['filters']) is SavedFilter:
             filters = self.investing['filters']

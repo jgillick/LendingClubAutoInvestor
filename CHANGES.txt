@@ -1,3 +1,15 @@
+v2.1.3 2013-09-05:
+  * Better error handling when a SavedFilter cannot be found.
+
+v2.1.2 2013-08-23:
+  * Improvements for Windows
+     - lcinvestor.bat
+     - Remove python-daemon requirements
+     - Documentation
+
+v2.1.0 2013-08-23:
+  * Fix issue #9: I no portfolios are available for entire available balance, try lower cash amounts.
+
 v2.0.2 2013-07-31:
   * Update call to add_batch to send loan_fractions instead of full portfolio object.
   * Update to lendingclub 0.1.2
