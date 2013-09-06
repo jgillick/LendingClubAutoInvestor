@@ -1,3 +1,7 @@
+v2.1.4 2013-09-06:
+  * Add --run-once flag.
+  * Fail and exit if the SavedFilter fails to load in the summary.
+
 v2.1.3 2013-09-05:
   * Better error handling when a SavedFilter cannot be found.
 

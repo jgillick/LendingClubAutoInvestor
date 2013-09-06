@@ -96,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', action='store', dest='config_file', default=None, help='A JSON file with the investment settings you want to use.')
     parser.add_argument('-q', '--quiet', action='store_true', dest='quiet', default=False, help='Don\'t show a confirmation prompt with your investment settings. Must be used with --config.')
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
-    parser.add_argument('--run-once', action='store_true', dest='run_once', default=False, help='Try to invest and then end the program. (Best used with --config, --email and --pass flags)')
+    parser.add_argument('--run-once', action='store_true', dest='run_once', default=False, help='Try to invest and then end the program. (Best used with --config, --email, --pass and --quiet flags)')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
 
     if hasDaemonRunner:

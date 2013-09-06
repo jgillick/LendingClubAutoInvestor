@@ -1,0 +1,47 @@
+{
+  // The minimum amount of cash you want to invest each round
+  "minCash": 800,
+
+  //  The minimum average interest rate portfolio that you will accept
+  "minPercent": 12.3,
+
+  //  The maximum average interest rate portfolio that you will accept
+  "maxPercent": 23.4,
+
+  // The named portfolio to put all new investments in
+  "portfolio": "Autoinvested",
+
+  // Saved filter ID (from LendingClub.com)
+  "filter_id": 23456,
+
+  // Advanced filters
+  "filters": {
+
+    // Exclude loans you're already invested in
+    "exclude_existing": false,
+
+    // A loan note must be at least this percent funded
+    "funding_progress": 60,
+
+    // Include 36 month term loans
+    "term60month": true,
+
+    // Include 36 month term loans
+    "term36month": false,
+
+    // Loan grades
+    "grades": {
+      // Allow any loan grade
+      "All": false,
+
+      // Or select which loan grades you will accept, A - G
+      "A": false,
+      "B": true,
+      "C": false,
+      "D": false,
+      "E": false,
+      "F": false,
+      "G": false
+    }
+  }
+}

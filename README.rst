@@ -211,12 +211,13 @@ To see the usage info, type ``lcinvestor --help``::
       -q, --quiet           Don't show a confirmation prompt with your investment
                             settings. Must be used with --config.
       --version             Print the lcinvestor version number
+      --run-once            Try to invest and then end the program. (Best used
+                            with --config, --email and --pass flags)
       -v, --verbose         Verbose output
 
 
-
-Options
-=======
+Investment Prompts 
+===================
 
 When you run the tool, it will take you though a series of prompts to define how to invest your cash.
 
@@ -270,6 +271,26 @@ Final Review
 
 After all the options are set, you will be given a review screen to verify those values. If you approve, type ``Y + <Enter>`` to start the program. It will now check your account every 30 minutes to see if there is enough available cash in your account to invest.
 
+
+Tips and Tricks
+===============
+
+Running at a specific time
+--------------------------
+What if you want to invest at an exact time? For example, you want to setup the program to run when that Lending Club releases new loans. 
+
+You can do this by scheduling a task on your system to call the tool command with the `--run-once` flag (along with the `--email`, `--pass`, `--config` and `--quiet` flags). This will run the program immediately and then end. **NOTE** Forgetting to use the `--run-once` flag will cause the program to continue running in the background and can cause big problems.
+
+Example of the command to call::
+
+    lcinvestor --config=./investing.json --email=you@email.com --pass=mysecret --quiet --run-once
+
+How to schedule a command or task
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+On OS X or Linux you'll use `crontab <http://www.pantz.org/software/cron/croninfo.html>`_.
+
+On Windows you'll setup a `Task Scheduler <http://technet.microsoft.com/en-us/library/cc748993.aspx>`_ or the `at command <http://technet.microsoft.com/en-us/library/bb726974.aspx>`_
 
 Help out
 ========
