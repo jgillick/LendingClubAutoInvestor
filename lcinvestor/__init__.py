@@ -140,6 +140,23 @@ class AutoInvestor:
         """
         self.investment_loop()
 
+    def run_once(self):
+        """
+        Try to invest, based on your settings, and then end the program.
+        """
+        self.loop = False
+
+        # Make sure the site is available
+        attempts = 0
+        while not self.lc.is_site_available():
+            attempts += 1
+            if attempts % 5 == 0:
+                self.logger.warn('LendingClub is not responding. Trying again in 10 seconds...')
+            sleep(10)
+
+        # Invest
+        self.attempt_to_invest()
+
     def stop(self):
         """
         Called when the investment loop should end.

@@ -96,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', action='store', dest='config_file', default=None, help='A JSON file with the investment settings you want to use.')
     parser.add_argument('-q', '--quiet', action='store_true', dest='quiet', default=False, help='Don\'t show a confirmation prompt with your investment settings. Must be used with --config.')
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
+    parser.add_argument('--run-once', action='store_true', dest='run_once', default=False, help='Try to invest and then end the program. (Best used with --config, --email and --pass flags)')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
 
     if hasDaemonRunner:
@@ -123,6 +124,9 @@ if __name__ == '__main__':
         exit(1)
     if options.quiet and options.config_file is None:
         print 'Can not use --quiet without --config'
+        exit(1)
+    if isDaemon and action != 'status' and options.run_once:
+        print 'Cannot use --run-once when starting lcinvestor as a daemon'
         exit(1)
 
     # Start program
@@ -172,6 +176,7 @@ if __name__ == '__main__':
         if options.password is not None:
             investor.settings['pass'] = options.password
 
+        # Get investment settings
         if isStarting or not isDaemon:
             investor.welcome_screen()
 
@@ -236,7 +241,12 @@ if __name__ == '__main__':
 
         # Start in the foreground
         else:
-            investor.run()
+            # Run once
+            if options.run_once is True:
+                investor.run_once()
+            # Run in loop
+            else:
+                investor.run()
 
     except lcinvestor.AutoInvestorError as e:
         print 'ERROR: {0}'.format(str(e))
