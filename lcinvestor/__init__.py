@@ -112,7 +112,11 @@ class AutoInvestor:
 
         # Use the settings from last time
         if self.settings.investing['min_percent'] is not False and self.settings.investing['max_percent'] is not False:
-            self.settings.show_summary()
+            summary = self.settings.show_summary()
+
+            if summary is False: # there was an error with saved settings
+                print '\nThere was an error with your saved settings. Please go through the prompts again.\n'
+                self.settings.get_investment_settings()
 
             if util.prompt_yn('Would you like to use these settings?', 'y'):
                 self.settings.save()  # to save the email that was just entered

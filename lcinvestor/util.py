@@ -65,7 +65,7 @@ def create_logger(verbose=False):
 
         logHandler = logging.StreamHandler()
         if verbose:
-            logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s #%(lineno)d - %(message)s', '%Y-%m-%d %H:%M'))
+            logHandler.setFormatter(logging.Formatter('%(levelname)s:\t%(asctime)s - %(message)s (line #%(lineno)d)', '%m-%d %H:%M'))
         else:
             logHandler.setFormatter(logging.Formatter('%(levelname)s: %(asctime)s - %(message)s', '%Y-%m-%d %H:%M'))
 

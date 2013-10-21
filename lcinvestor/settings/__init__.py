@@ -310,6 +310,7 @@ class Settings():
         """
         Show a summary of the settings that will be used for auto investing
         """
+        ret = True
 
         print '\n========= {0} ========='.format(title)
         print 'Invest ALL available funds...\n'
@@ -324,7 +325,7 @@ class Settings():
         if self.investing['filter_id'] and type(self['filters']) is not SavedFilter:
             print '\n!!! ERROR !!!'
             print 'Saved filter \'{0}\' could not be loaded from LendingClub. Check the ID and try again.\n'.format(self.investing['filter_id'])
-            exit(1);
+            ret = False
 
         elif type(self['filters']) is SavedFilter:
             filters = self.investing['filters']
@@ -361,6 +362,8 @@ class Settings():
                 print '  + Interest rates grades: {0}'.format(', '.join(sorted(grades)))
 
         print '=========={0}==========\n'.format(''.center(len(title), '='))
+
+        return ret
 
     def confirm_settings(self):
         self.show_summary()
