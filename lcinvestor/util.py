@@ -84,6 +84,13 @@ def get_password():
     """
     return getpass.getpass()
 
+def get_version():
+    """
+    Return the lcinvestor version number
+    """
+    this_path = os.path.dirname(os.path.realpath(__file__))
+    version_file = os.path.join(this_path, 'VERSION')
+    return open(version_file).read()
 
 def get_input(msg):
     """

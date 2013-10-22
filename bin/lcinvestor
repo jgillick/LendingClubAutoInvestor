@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
         # Print version number
         if options.version:
-            print 'lcinvestor {0}'.format(investor.version())
+            print 'lcinvestor {0}'.format(lcinvestor.util.get_version())
             exit(0)
 
         # Print daemon status and exit

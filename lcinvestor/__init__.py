@@ -74,9 +74,7 @@ class AutoInvestor:
         """
         Return the version number of the Lending Club Investor tool
         """
-        this_path = os.path.dirname(os.path.realpath(__file__))
-        version_file = os.path.join(this_path, 'VERSION')
-        return open(version_file).read()
+        return util.get_version();
 
     def welcome_screen(self):
         print "\n///--------------------------- $$$ ---------------------------\\\\\\"
@@ -104,6 +102,7 @@ class AutoInvestor:
 
         if not self.authed:
             self.get_auth()
+            self.settings.select_profile()
 
         print 'You have ${0} in your account, free to invest\n'.format(self.lc.get_cash_balance())
 
@@ -111,7 +110,7 @@ class AutoInvestor:
         print 'Now let\'s define what you want to do'
 
         # Use the settings from last time
-        if self.settings.investing['min_percent'] is not False and self.settings.investing['max_percent'] is not False:
+        if self.settings.profile_loaded is not False:
             summary = self.settings.show_summary()
 
             if summary is False: # there was an error with saved settings

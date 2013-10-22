@@ -46,6 +46,11 @@ class Settings():
     settings_file = 'settings.yaml'  # User settings
     investing_file = 'investing.json'  # Investment settings
 
+
+    investing_json = None  # A dictionary representing the loaded investing JSON file
+    profile_loaded = False # True if a investing profile has been loaded from the investing JSON
+
+
     # Auth settings
     auth = {
         'email': False,
@@ -70,8 +75,7 @@ class Settings():
 
     # Default user settings
     user_settings = {
-        'frequency': 60,
-        'alert': False
+        'frequency': 60
     }
 
     def __init__(self, investor, investing_file=None, settings_dir=None, logger=False, verbose=False):
@@ -95,7 +99,12 @@ class Settings():
             os.mkdir(self.settings_dir)
 
         self.get_user_settings()
-        self.load_investment_settings_file(investing_file)
+        self.load_investment_settings_file();
+
+        # Default email to the last profile used
+        if 'last_profile' in self.investing_json and self.investing_json['last_profile'] != 'none':
+            self.auth['email'] = self.investing_json['last_profile']
+
 
     def __getitem__(self, key):
         """
@@ -162,20 +171,29 @@ class Settings():
         """
         Save the investment settings dict to a file
         """
-        if self.settings_dir is None:
+        if self.settings_dir is None or self.auth['email'] is None:
             return
 
         try:
+            profile = self.investing.copy()
+            try:
+                # Load existing JSON file
+                to_save = self.read_investment_settings_file()
+            except Exception as e:
+                # Create new JSON
+                to_save = { 'profiles': {} }
 
-            # Prepare JSON
-            to_save = self.investing.copy()
-            to_save['email'] = self.auth['email']
-
-            if type(to_save['filters']) is SavedFilter:
-                to_save['filter_id'] = to_save['filters'].id
-                to_save['filters'] = to_save['filters'].id
+            # Add filter_id
+            if 'filters' in profile and type(profile['filters']) is SavedFilter:
+                profile['filter_id'] = profile['filters'].id
+                profile['filters'] = profile['filters'].id
             else:
-                to_save['filter_id'] = None
+                profile['filter_id'] = None
+
+            # Add profile and version
+            to_save['profiles'][self.auth['email']] = profile
+            to_save['last_profile'] = self.auth['email']
+            to_save['version'] = util.get_version()
 
             json_out = json.dumps(to_save)
 
@@ -195,58 +213,75 @@ class Settings():
         Migrate old settings to what they should be now
         """
 
-        # Investing filters
-        if settings['filters']:
+        # Create profiles object
+        if 'profiles' not in settings:
+            email = 'none'
+            if 'email' in settings:
+                email = settings['email'].lower()
 
-            if 'filter_id' not in settings:
-                settings['filter_id'] = None
+            newSettings = {
+                'version': util.get_version(),
+                'last_profile': email,
+                'profiles': {
+                    email: settings
+                }
+            }
+            settings = newSettings
 
-            if type(settings['filters']) is Filter:
-                if 'term' not in settings['filters']:
-                    settings['filters']['term'] = {}
+        # Migrate each profile
+        for email, profile in settings['profiles'].iteritems():
 
-                if '36month' in settings['filters']:
-                    settings['filters']['term']['Year3'] = settings['filters']['36month']
-                    del settings['filters']['36month']
-                if 'term60month' in settings['filters']:
-                    settings['filters']['term']['Year3'] = settings['filters']['term36month']
-                    del settings['filters']['term36month']
+            # Investing filters
+            if profile['filters']:
 
-                if '60month' in settings['filters']:
-                    settings['filters']['term']['Year5'] = settings['filters']['60month']
-                    del settings['filters']['60month']
-                if 'term60month' in settings['filters']:
-                    settings['filters']['term']['Year5'] = settings['filters']['term60month']
-                    del settings['filters']['term60month']
+                if 'filter_id' not in profile:
+                    profile['filter_id'] = None
 
-        if 'minPercent' in settings:
-            settings['min_percent'] = settings['minPercent']
-            del settings['minPercent']
-        if 'maxPercent' in settings:
-            settings['max_percent'] = settings['maxPercent']
-            del settings['maxPercent']
+                if type(profile['filters']) is Filter:
+                    if 'term' not in profile['filters']:
+                        profile['filters']['term'] = {}
 
-        if 'minCash' in settings:
-            settings['min_cash'] = settings['minCash']
-            del settings['minCash']
+                    if '36month' in profile['filters']:
+                        profile['filters']['term']['Year3'] = profile['filters']['36month']
+                        del profile['filters']['36month']
+                    if 'term60month' in profile['filters']:
+                        profile['filters']['term']['Year3'] = profile['filters']['term36month']
+                        del profile['filters']['term36month']
 
-        if 'max_per_note' not in settings:
-            settings['max_per_note'] = 25
+                    if '60month' in profile['filters']:
+                        profile['filters']['term']['Year5'] = profile['filters']['60month']
+                        del profile['filters']['60month']
+                    if 'term60month' in profile['filters']:
+                        profile['filters']['term']['Year5'] = profile['filters']['term60month']
+                        del profile['filters']['term60month']
+
+            if 'minPercent' in profile:
+                profile['min_percent'] = profile['minPercent']
+                del profile['minPercent']
+            if 'maxPercent' in profile:
+                profile['max_percent'] = profile['maxPercent']
+                del profile['maxPercent']
+
+            if 'minCash' in profile:
+                profile['min_cash'] = profile['minCash']
+                del profile['minCash']
+
+            if 'max_per_note' not in profile:
+                profile['max_per_note'] = 25
 
         return settings
 
-    def load_investment_settings_file(self, file_path=None):
+    def read_investment_settings_file(self, file_path=None):
         """
-        Returned the saved settings used last time this program was run
+        Read a JSON file with investment settings and return the dictionary
         """
-        if not self.settings_dir and file_path is None:
-            return False
 
+        # Get default file path
         if file_path is None:
             file_path = os.path.join(self.settings_dir, self.investing_file)
 
         if os.path.exists(file_path):
-            self.logger.debug('Loading investment settings file: {0}'.format(file_path))
+            self.logger.debug('Reading investment settings file: {0}'.format(file_path))
             try:
                 # Read file
                 f = open(file_path, 'r')
@@ -261,25 +296,55 @@ class Settings():
 
                 # Migrations
                 saved_settings = self.migrate_settings(saved_settings)
-
-                # Load saved filter
-                if saved_settings['filter_id']:
-                    saved_settings['filter'] = False
-
-                # Add values to dictionary
-                for key, value in self.investing.iteritems():
-                    if key in saved_settings:
-                        self.investing[key] = saved_settings[key]
-                        self.is_dirty = True
-
-                # Add email to auth
-                if 'email' in saved_settings:
-                    self.auth['email'] = saved_settings['email']
+                return saved_settings
 
             except Exception as e:
                 self.logger.debug('Could not read investment settings file: {0}'.format(str(e)))
                 print jsonStr
                 raise Exception('Could not process file \'{0}\': {1}'.format(file_path, str(e)))
+        else:
+            self.logger.debug('The file \'{0}\' doesn\'t exist'.format(file_path))
+            raise Exception('The file \'{0}\' doesn\'t exist'.format(file_path))
+
+        return False
+
+
+    def load_investment_settings_file(self, file_path=None):
+        """
+        Load the JSON settings file into investing_json dict
+        """
+        self.investing_json = self.read_investment_settings_file(file_path)
+
+
+    def select_profile(self, profile_email=None):
+        """
+        Load a profile from the investing JSON into the settings dictionary.
+        If profile_email is None, we attempt to load the profile for auth['email']
+        """
+
+        # No investing JSON
+        if self.investing_json is None or 'profiles' not in self.investing_json:
+            return False
+
+        # Get profile email fro auth
+        if profile_email is None:
+            if self.auth['email'] is None:
+                profile_email = 'none'
+            profile_email = self.auth['email']
+
+        # Load profile
+        if profile_email in self.investing_json['profiles']:
+            profile = self.investing_json['profiles'][profile_email]
+
+            # Load saved filter
+            if 'filter_id' in profile and profile['filter_id']:
+                profile['filter'] = False
+
+            # Add values to dictionary
+            for key, value in self.investing.iteritems():
+                if key in profile:
+                    self.investing[key] = profile[key]
+                    self.is_dirty = True
 
             # Create filter object
             try:
@@ -292,11 +357,11 @@ class Settings():
             except Exception as e:
                 raise Exception('Could load filter settings: {0}'.format(str(e)))
 
+            self.profile_loaded = True
             return True
-        else:
-            self.logger.debug('The file \'{0}\' doesn\'t exist'.format(file_path))
 
         return False
+
 
     def get_auth_settings(self):
         """
