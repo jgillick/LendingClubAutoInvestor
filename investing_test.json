@@ -1,18 +1,21 @@
 {
   // The minimum amount of cash you want to invest each round
-  "minCash": 800,
+  "min_cash": 800,
+
+  // The most you want to invest per loan note
+  "max_per_note": 50,
 
   //  The minimum average interest rate portfolio that you will accept
-  "minPercent": 12.3,
+  "min_percent": 12.3,
 
   //  The maximum average interest rate portfolio that you will accept
-  "maxPercent": 23.4,
+  "max_percent": 23.4,
 
   // The named portfolio to put all new investments in
   "portfolio": "Autoinvested",
 
   // Saved filter ID (from LendingClub.com)
-  "filter_id": 23456,
+  // "filter_id": 23456,
 
   // Advanced filters
   "filters": {
