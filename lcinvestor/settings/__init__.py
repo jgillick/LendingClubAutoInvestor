@@ -29,6 +29,7 @@ import os
 import shutil
 import yaml
 import json
+import copy
 from lendingclub.filters import Filter, SavedFilter, SavedFilterError
 from lcinvestor import util
 
@@ -40,6 +41,8 @@ class Settings():
 
     logger = None
     investor = None
+
+    settings_file_version = 2
 
     # Files
     settings_dir = None  # The directory that holds all the settings files
@@ -58,7 +61,7 @@ class Settings():
     }
 
     # Defines the investment funding settings
-    investing = {
+    default_investing = {
         'min_cash': 500,
         'min_percent': False,
         'max_percent': False,
@@ -67,6 +70,7 @@ class Settings():
         'filter_id': None,
         'filters': Filter()
     }
+    investing = {}
 
     # If the investing settings have been updated
     # False: The settings are still set to the defaults
@@ -84,6 +88,7 @@ class Settings():
               saving settings to the cache file.
         settings_dir: The directory that will be used to save the user and investment settings files
         """
+        self.investing = copy.deepcopy(self.default_investing)
         self.is_dirty = False
         self.investor = investor
         self.settings_dir = settings_dir
@@ -111,7 +116,9 @@ class Settings():
         Attempts to a value from one of the dictionaries
         """
         if key in self.investing:
-            if key == 'filters' and self.investing['filter_id'] and type(self.investing['filters']) is not SavedFilter:
+
+            # Load saved filter by ID
+            if key == 'filters' and 'filter_id' in self.investing and self.investing['filter_id'] and type(self.investing['filters']) is not SavedFilter:
                 try:
                     self.investing['filters'] = SavedFilter(self.investor.lc, self.investing['filter_id'])
                 except Exception:
@@ -163,7 +170,7 @@ class Settings():
         """
 
         # Remove comment lines
-        jsonStr = re.sub(r'\n\s*//.*?\n', '\n', jsonStr)
+        jsonStr = re.sub(r'\s*//.*?\n', '\n\n', jsonStr)
 
         return jsonStr
 
@@ -175,6 +182,9 @@ class Settings():
             return
 
         try:
+            self.logger.debug('Save investment settings to file')
+
+            # Add current profile to the investing JSON file object
             profile = self.investing.copy()
             try:
                 # Load existing JSON file
@@ -186,7 +196,7 @@ class Settings():
             # Add filter_id
             if 'filters' in profile and type(profile['filters']) is SavedFilter:
                 profile['filter_id'] = profile['filters'].id
-                profile['filters'] = profile['filters'].id
+                profile['filters'] = None
             else:
                 profile['filter_id'] = None
 
@@ -194,6 +204,7 @@ class Settings():
             to_save['profiles'][self.auth['email']] = profile
             to_save['last_profile'] = self.auth['email']
             to_save['version'] = util.get_version()
+            to_save['format'] = self.settings_file_version
 
             json_out = json.dumps(to_save)
 
@@ -219,8 +230,11 @@ class Settings():
             if 'email' in settings:
                 email = settings['email'].lower()
 
+            self.logger.debug('Creating profiles object with "{0}"'.format(email))
+
             newSettings = {
                 'version': util.get_version(),
+                'format': self.settings_file_version,
                 'last_profile': email,
                 'profiles': {
                     email: settings
@@ -232,19 +246,21 @@ class Settings():
         for email, profile in settings['profiles'].iteritems():
 
             # Investing filters
-            if profile['filters']:
+            if 'filters' in profile and profile['filters']:
+
+                self.logger.debug('Normalize profile for "{0}"'.format(email))
 
                 if 'filter_id' not in profile:
                     profile['filter_id'] = None
 
-                if type(profile['filters']) is Filter:
+                if type(profile['filters']) is dict:
                     if 'term' not in profile['filters']:
                         profile['filters']['term'] = {}
 
                     if '36month' in profile['filters']:
                         profile['filters']['term']['Year3'] = profile['filters']['36month']
                         del profile['filters']['36month']
-                    if 'term60month' in profile['filters']:
+                    if 'term36month' in profile['filters']:
                         profile['filters']['term']['Year3'] = profile['filters']['term36month']
                         del profile['filters']['term36month']
 
@@ -296,6 +312,7 @@ class Settings():
 
                 # Migrations
                 saved_settings = self.migrate_settings(saved_settings)
+                self.logger.debug('Normalized settings JSON: {0}'.format(saved_settings))
                 return saved_settings
 
             except Exception as e:
@@ -326,15 +343,28 @@ class Settings():
         if self.investing_json is None or 'profiles' not in self.investing_json:
             return False
 
-        # Get profile email fro auth
+        # Reset investing settings from defaults
+        self.investing = copy.deepcopy(self.default_investing)
+
+        # Get profile email from auth
         if profile_email is None:
             if self.auth['email'] is None:
                 profile_email = 'none'
             profile_email = self.auth['email']
 
-        # Load profile
+        self.logger.debug('Select investing profile: {0}'.format(profile_email))
+
+        # Get profile
+        profile = None
         if profile_email in self.investing_json['profiles']:
             profile = self.investing_json['profiles'][profile_email]
+        elif 'none' in self.investing_json['profiles']:
+            profile = self.investing_json['profiles']['none']
+
+        self.logger.debug('Load profile: {0}'.format(profile))
+
+        # Load profile
+        if profile:
 
             # Load saved filter
             if 'filter_id' in profile and profile['filter_id']:

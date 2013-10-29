@@ -162,6 +162,7 @@ if __name__ == '__main__':
                 exit(1)
             try:
                 investor.settings.load_investment_settings_file(options.config_file)
+                investor.settings.select_profile('none')
                 if not investor.settings.is_dirty:
                     print 'Your config file did not set anything.'
                     exit(1)

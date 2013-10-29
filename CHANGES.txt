@@ -1,3 +1,10 @@
+v2.2b 2013-10-21:
+  * Add profile support to saved settings files.
+
+
+v2.1.5 2013-10-21:
+  * Do not fail if a saved filter cannot be loaded
+
 v2.1.4 2013-09-06:
   * Add --run-once flag.
   * Fail and exit if the SavedFilter fails to load in the summary.
