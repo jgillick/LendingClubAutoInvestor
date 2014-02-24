@@ -1,6 +1,8 @@
+v2.2 2014-02-24:
+  * Moved 2.2 from beta to general release
+
 v2.2b 2013-10-21:
   * Add profile support to saved settings files.
-
 
 v2.1.5 2013-10-21:
   * Do not fail if a saved filter cannot be loaded
