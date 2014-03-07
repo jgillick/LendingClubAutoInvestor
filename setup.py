@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='lcinvestor',
-    version=open('lcinvestor/VERSION').read(),
+    version=open('lcinvestor/VERSION').read().strip(),
     author='Jeremy Gillick',
     author_email='none@none.com',
     packages=['lcinvestor', 'lcinvestor.tests', 'lcinvestor.settings'],

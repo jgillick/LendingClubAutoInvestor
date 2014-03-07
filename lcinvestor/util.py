@@ -90,7 +90,7 @@ def get_version():
     """
     this_path = os.path.dirname(os.path.realpath(__file__))
     version_file = os.path.join(this_path, 'VERSION')
-    return open(version_file).read()
+    return open(version_file).read().strip()
 
 def get_input(msg):
     """
