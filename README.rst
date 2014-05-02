@@ -49,10 +49,10 @@ Python 2.6 and 2.7 (does **NOT** support Python 3.x)
 
 Modules
 -------
-* lendingclub 0.1.3+
-* argparse
-* pyyaml
-* pause
+* `lendingclub <https://github.com/jgillick/LendingClub>`_ 0.1.7+ 
+* `argparse <https://pypi.python.org/pypi/argparse>`_
+* `pyyaml <http://pyyaml.org/wiki/PyYAML>`_
+* `pause <https://github.com/jgillick/python-pause>`_
 
 These will automatically be installed when using pip.
 
