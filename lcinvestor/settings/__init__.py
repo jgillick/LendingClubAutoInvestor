@@ -296,6 +296,11 @@ class Settings():
         if file_path is None:
             file_path = os.path.join(self.settings_dir, self.investing_file)
 
+            if not os.path.exists(file_path):
+                f = open(file_path, 'w')
+                f.write('{"profiles": {}}')
+                f.close()
+
         if os.path.exists(file_path):
             self.logger.debug('Reading investment settings file: {0}'.format(file_path))
             try:

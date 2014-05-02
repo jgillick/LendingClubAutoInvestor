@@ -1,3 +1,6 @@
+v2.2.2 2014-05-02:
+  * Fixed bug 21: https://github.com/jgillick/LendingClubAutoInvestor/issues/21
+
 v2.2 2014-02-24:
   * Moved 2.2 from beta to general release
 
