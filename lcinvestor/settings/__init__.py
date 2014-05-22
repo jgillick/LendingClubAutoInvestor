@@ -68,7 +68,7 @@ class Settings():
         'max_per_note': 25,
         'portfolio': None,
         'filter_id': None,
-        'filters': Filter()
+        #'filters': Filter()
     }
     investing = {}
 
@@ -88,7 +88,7 @@ class Settings():
               saving settings to the cache file.
         settings_dir: The directory that will be used to save the user and investment settings files
         """
-        self.investing = copy.deepcopy(self.default_investing)
+        self.investing = self.get_default_investing_settings()
         self.is_dirty = False
         self.investor = investor
         self.settings_dir = settings_dir
@@ -142,6 +142,14 @@ class Settings():
             self.user_settings[key] = value
         elif key in self.auth:
             self.auth[key] = value
+
+    def get_default_investing_settings(self):
+        """
+        Return the default investing settings dict
+        """
+        investing = copy.deepcopy(self.default_investing)
+        investing['filters'] = Filter()
+        return investing
 
     def get_user_settings(self):
         """
@@ -349,7 +357,7 @@ class Settings():
             return False
 
         # Reset investing settings from defaults
-        self.investing = copy.deepcopy(self.default_investing)
+        self.investing = self.get_default_investing_settings()
 
         # Get profile email from auth
         if profile_email is None:
