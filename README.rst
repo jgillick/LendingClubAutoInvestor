@@ -152,7 +152,7 @@ Here's an example config file (NOTE: Comments are usually not allowed in JSON an
       // A loan note must be at least this percent funded
       "funding_progress": 90,
 
-      // Include 36 month term loans
+      // Include 60 month term loans
       "term60month": true,
 
       // Include 36 month term loans
