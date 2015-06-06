@@ -44,6 +44,7 @@ class AutoInvestor:
     lc = None
     authed = False
     verbose = False
+    auto_execute = True
     settings = None
     loop = False
     app_dir = None
@@ -51,12 +52,13 @@ class AutoInvestor:
     # The file that the summary from the last investment is saved to
     last_investment_file = 'last_investment.json'
 
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, auto_execute=True):
         """
         Create an AutoInvestor instance
          - Set verbose to True if you want to see debugging logs
         """
         self.verbose = verbose
+        self.auto_execute = auto_execute
         self.logger = util.create_logger(verbose)
         self.app_dir = util.get_app_directory()
         self.lc = LendingClub()
@@ -270,20 +272,23 @@ class AutoInvestor:
                             else:
                                 cash = util.nearest_25(cash)
 
-
                     if portfolio:
-                        self.logger.info('Auto investing ${0} at {1}%...'.format(cash, portfolio['percentage']))
-                        sleep(5)  # last chance to cancel
-
                         # Invest
                         assign_to = self.settings['portfolio']
 
                         order = self.lc.start_order()
                         order.add_batch(portfolio['loan_fractions'])
 
-                        order._Order__already_staged = True  # Don't try this at home kids
-                        order._Order__i_know_what_im_doing = True  # Seriously, don't do it
-                        order_id = order.execute(portfolio_name=assign_to)
+                        if self.auto_execute:
+                            self.logger.info('Auto investing ${0} at {1}%...'.format(cash, portfolio['percentage']))
+                            sleep(5)  # last chance to cancel
+
+                            order._Order__already_staged = True  # Don't try this at home kids
+                            order._Order__i_know_what_im_doing = True  # Seriously, don't do it
+                            order_id = order.execute(portfolio_name=assign_to)
+                        else:
+                            self.logger.info('no_auto_execute is set. Please to go LendingClub website to complete the order')
+                            return False
 
                         # Success! Show summary and save the order
                         summary = self.get_order_summary(portfolio)
