@@ -3,12 +3,10 @@ Lending Club Auto Investing Tool
 
 A program that watches your LendingClub account and automatically invests cash as it becomes available based on your personalized investment preferences.
 
-
 Disclaimer
 ==========
 
 I have tested this tool to the best of my ability, but understand that it may have bugs. Use at your own risk!
-
 
 Why?
 ====
@@ -18,7 +16,6 @@ LendingClub. When not all the loans get funded, it becomes a two steps
 forward, one step back process of reinvesting the cash every few days
 until it's all invested. For large sums of money this process can take
 over a month to complete.
-
 
 How it works
 ============
@@ -31,7 +28,6 @@ To put it simply, the tool does the same thing as if you were to:
 * Click Invest and select any filters you want to use
 * Select an average interest rate portfolio you want to invest in
 * Now click Continue and to through the following two pages to invest in that portfolio.
-
 
 Source
 ======
@@ -49,7 +45,7 @@ Python 2.6 and 2.7 (does **NOT** support Python 3.x)
 
 Modules
 -------
-* `lendingclub <https://github.com/jgillick/LendingClub>`_ 0.1.7+ 
+* `lendingclub <https://github.com/jgillick/LendingClub>`_ 0.1.7+
 * `argparse <https://pypi.python.org/pypi/argparse>`_
 * `pyyaml <http://pyyaml.org/wiki/PyYAML>`_
 * `pause <https://github.com/jgillick/python-pause>`_
@@ -63,7 +59,6 @@ Optional Modules
 
 If this is installed, lcinvestor can be run as a background deamon processes (not supported on windows).
 
-
 Install (OSX, Linux, Posix)
 ===========================
 
@@ -75,7 +70,6 @@ Or manually (assuming all required modules are installed on your system)::
 
     sudo python ./setup.py install
 
-
 Instructions for Windows
 ========================
 
@@ -83,7 +77,6 @@ Instructions for Windows
    * http://www.anthonydebarros.com/2011/10/15/setting-up-python-in-windows-7/
 2) Open the command prompt: Start Menu > Accessories > Command Prompt
 3) Run the following command:: ``pip install lcinvestor``
-
 
 Running lcinvestor
 ==================
@@ -110,7 +103,6 @@ All output will be sent to ``/var/log/daemon.log``.
 To stop the daemon run::
 
     lcinvestor stop
-
 
 With a JSON config file
 -----------------------
@@ -271,13 +263,12 @@ Final Review
 
 After all the options are set, you will be given a review screen to verify those values. If you approve, type ``Y + <Enter>`` to start the program. It will now check your account every 30 minutes to see if there is enough available cash in your account to invest.
 
-
 Tips and Tricks
 ===============
 
 Running at a specific time
 --------------------------
-What if you want to invest at an exact time? For example, you want to setup the program to run when that Lending Club releases new loans. 
+What if you want to invest at an exact time? For example, you want to setup the program to run when that Lending Club releases new loans.
 
 You can do this by scheduling a task on your system to call the tool command with the `--run-once` flag (along with the `--email`, `--pass`, `--config` and `--quiet` flags). This will run the program immediately and then end. **NOTE** Forgetting to use the `--run-once` flag will cause the program to continue running in the background and can cause big problems.
 
@@ -288,10 +279,11 @@ Example of the command to call::
 Using Mac OS X Keychain for extra security
 ------------------------------------------
 
-If you prefer to use Mac OS X keychain instead of passing `--pass` argument, you can use `--keychain`.
+If you prefer to use Mac OS X keychain instead of passing ``--pass`` argument, you can use ``--keychain``.
 In order to use this option, set up a new Keychain Item with Name and Account Name "LendingClub"
 
-![Alt text](https://monosnap.com/file/JiMjHItWA2I6kxgMAeGALMobPj3Qbg.png)
+.. image:: keychain.png
+   :target: https://monosnap.com/file/JiMjHItWA2I6kxgMAeGALMobPj3Qbg.png
 
 How to schedule a command or task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -304,7 +296,6 @@ Help out
 ========
 
 Please help me by forking and committing enhancements!
-
 
 License
 =======
