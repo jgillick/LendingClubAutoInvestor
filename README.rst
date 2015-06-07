@@ -53,7 +53,7 @@ Modules
 * `argparse <https://pypi.python.org/pypi/argparse>`_
 * `pyyaml <http://pyyaml.org/wiki/PyYAML>`_
 * `pause <https://github.com/jgillick/python-pause>`_
-* `keyring <https://pypi.python.org/pypi/keyring>`_ (only for Mac OS X)
+* `keyring <https://pypi.python.org/pypi/keyring>`_
 
 These will automatically be installed when using pip.
 
