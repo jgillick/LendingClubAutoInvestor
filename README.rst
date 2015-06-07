@@ -53,6 +53,7 @@ Modules
 * `argparse <https://pypi.python.org/pypi/argparse>`_
 * `pyyaml <http://pyyaml.org/wiki/PyYAML>`_
 * `pause <https://github.com/jgillick/python-pause>`_
+* `keyring <https://pypi.python.org/pypi/keyring>`_ (only for Mac OS X)
 
 These will automatically be installed when using pip.
 
@@ -205,18 +206,17 @@ To see the usage info, type ``lcinvestor --help``::
       -h, --help            show this help message and exit
       --email EMAIL         The email used to login to LendingClub
       --pass pass           Your LendingClub password.
+      --keychain            (MacOS X only) Use MacOS X keychain to store password
       -c CONFIG_FILE, --config CONFIG_FILE
                             A JSON file with the investment settings you want to
                             use.
       -q, --quiet           Don't show a confirmation prompt with your investment
-                            settings. Must be used with --config.
       --version             Print the lcinvestor version number
       --run-once            Try to invest and then end the program. (Best used
                             with --config, --email and --pass flags)
       -v, --verbose         Verbose output
 
-
-Investment Prompts 
+Investment Prompts
 ===================
 
 When you run the tool, it will take you though a series of prompts to define how to invest your cash.
@@ -284,6 +284,14 @@ You can do this by scheduling a task on your system to call the tool command wit
 Example of the command to call::
 
     lcinvestor --config=./investing.json --email=you@email.com --pass=mysecret --quiet --run-once
+
+Using Mac OS X Keychain for extra security
+------------------------------------------
+
+If you prefer to use Mac OS X keychain instead of passing `--pass` argument, you can use `--keychain`.
+In order to use this option, set up a new Keychain Item with Name and Account Name "LendingClub"
+
+![Alt text](https://monosnap.com/file/JiMjHItWA2I6kxgMAeGALMobPj3Qbg.png)
 
 How to schedule a command or task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
