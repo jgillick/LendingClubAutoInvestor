@@ -19,7 +19,8 @@ setup(
         "lendingclub >= 0.1.8",
         "argparse >= 1.2.1",
         "pyyaml >= 3.09",
-        "pause >= 0.1.2"
+        "pause >= 0.1.2",
+        "keyring"
     ],
     platforms='osx, posix, linux, windows',
     classifiers=[

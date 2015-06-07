@@ -30,6 +30,7 @@ import signal
 from datetime import datetime
 import argparse
 from sys import platform as _platform
+import keyring
 
 try:
     from daemon import runner
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--email', action='store', dest='email', default=None, help='The email used to login to LendingClub')
     parser.add_argument('--pass', action='store', dest='password', metavar='pass', default=None, help='Your LendingClub password.')
-    parser.add_argument('--keychain', action='store_true', dest='keychain', default=False, help='Use MacOS X keychain to retrieve password')
+    parser.add_argument('--secure', action='store_true', dest='secure', default=False, help='Use your system\'s secure password storage to retrieve password')
     parser.add_argument('-c', '--config', action='store', dest='config_file', default=None, help='A JSON file with the investment settings you want to use.')
     parser.add_argument('-q', '--quiet', action='store_true', dest='quiet', default=False, help='Don\'t show a confirmation prompt with your investment settings. Must be used with --config.')
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
@@ -178,10 +179,14 @@ if __name__ == '__main__':
             investor.settings['email'] = options.email
 
         if options.password is not None:
-          investor.settings['pass'] = options.password
-        elif options.keychain and _platform == "darwin":
-          import keyring
-          investor.settings['pass'] =  keyring.get_password("LendingClub","LendingClub")
+            investor.settings['pass'] = options.password
+        elif options.secure:
+            password =  keyring.get_password("LendingClub","LendingClubAutoInvestor")
+            if password is not None:
+                investor.settings['pass'] = password
+            else:
+                print 'Password is not present in Keychain (Name: LendingClub, Account: LendingClubAutoInvestor )\n'
+                exit(1)
 
         # Get investment settings
         if isStarting or not isDaemon:
