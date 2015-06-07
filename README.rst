@@ -292,12 +292,9 @@ Using system keyring service to avoid exposing password
 
 If you prefer to use your system's keychain instead of passing ``--pass`` argument, you can use ``--secure``.
 
-On Mac OS X, in order to use this option, set up a new Keychain Item with Name "LendingClub" and Account Name "LendingClubAutoInvestor"
+On Mac OS X, in order to use this option, set up a new Keychain Item with Name "LendingClub" and Account Name "LendingClubAutoInvestor" (`example <https://monosnap.com/image/uToQGkqTsrBL7PUen9XSoq6muh9ocl.png>`_)
 
-.. image:: keychain.png
-   :target: https://monosnap.com/image/uToQGkqTsrBL7PUen9XSoq6muh9ocl.png
-
-Refer to `this list <https://github.com/jaraco/keyring/#what-is-python-keyring-lib>` for a list of supported services
+Refer to `this list <https://github.com/jaraco/keyring/#what-is-python-keyring-lib>`_ for a list of supported services
 
 How to schedule a command or task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
