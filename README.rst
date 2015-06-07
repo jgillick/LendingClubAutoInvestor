@@ -288,10 +288,11 @@ Example of the command to call::
 Using Mac OS X Keychain for extra security
 ------------------------------------------
 
-If you prefer to use Mac OS X keychain instead of passing `--pass` argument, you can use `--keychain`.
+If you prefer to use Mac OS X keychain instead of passing ``--pass`` argument, you can use ``--keychain``.
 In order to use this option, set up a new Keychain Item with Name and Account Name "LendingClub"
 
-![Alt text](https://monosnap.com/file/JiMjHItWA2I6kxgMAeGALMobPj3Qbg.png)
+.. image:: keychain.png
+   :target: https://monosnap.com/file/JiMjHItWA2I6kxgMAeGALMobPj3Qbg.png
 
 How to schedule a command or task
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
