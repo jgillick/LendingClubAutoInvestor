@@ -287,7 +287,7 @@ class AutoInvestor:
                             order._Order__i_know_what_im_doing = True  # Seriously, don't do it
                             order_id = order.execute(portfolio_name=assign_to)
                         else:
-                            self.logger.info('no_auto_execute is set. Please to go LendingClub website to complete the order')
+                            self.logger.info('Order staged but not completed, please to go LendingClub website to complete the order. (see the "--no-auto-execute" command flag)')
                             return False
 
                         # Success! Show summary and save the order

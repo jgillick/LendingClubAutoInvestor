@@ -101,7 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
     parser.add_argument('--run-once', action='store_true', dest='run_once', default=False, help='Try to invest and then end the program. (Best used with --config, --email, --pass and --quiet flags)')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
-    parser.add_argument('--no_auto_execute', action='store_true', dest='no_auto_execute', default=False, help='Process not execute order and will require manual order completion')
+    parser.add_argument('--no-auto-execute', action='store_true', dest='no_auto_execute', default=False, help='Do not execute orders. Merely stage the order and then you can manually complete it on the LendingClub site.')
 
     if hasDaemonRunner:
         parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')

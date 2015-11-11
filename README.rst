@@ -49,7 +49,7 @@ Python 2.6 and 2.7 (does **NOT** support Python 3.x)
 
 Modules
 -------
-* `lendingclub <https://github.com/jgillick/LendingClub>`_ 0.1.7+ 
+* `lendingclub <https://github.com/jgillick/LendingClub>`_ 0.1.7+
 * `argparse <https://pypi.python.org/pypi/argparse>`_
 * `pyyaml <http://pyyaml.org/wiki/PyYAML>`_
 * `pause <https://github.com/jgillick/python-pause>`_
@@ -212,8 +212,8 @@ To see the usage info, type ``lcinvestor --help``::
                             A JSON file with the investment settings you want to
                             use.
       -q, --quiet           Don't show a confirmation prompt with your investment
-      --no_auto_execute     Process not execute order and will require manual order completion
-                            settings. Must be used with --config.
+      --no-auto-execute     Do not execute orders. Merely stage the order and then
+                            you can manually complete it on the LendingClub site.
       --version             Print the lcinvestor version number
       --run-once            Try to invest and then end the program. (Best used
                             with --config, --email and --pass flags)
@@ -280,7 +280,7 @@ Tips and Tricks
 
 Running at a specific time
 --------------------------
-What if you want to invest at an exact time? For example, you want to setup the program to run when that Lending Club releases new loans. 
+What if you want to invest at an exact time? For example, you want to setup the program to run when that Lending Club releases new loans.
 
 You can do this by scheduling a task on your system to call the tool command with the `--run-once` flag (along with the `--email`, `--pass`, `--config` and `--quiet` flags). This will run the program immediately and then end. **NOTE** Forgetting to use the `--run-once` flag will cause the program to continue running in the background and can cause big problems.
 
