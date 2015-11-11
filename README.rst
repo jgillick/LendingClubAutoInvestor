@@ -212,6 +212,7 @@ To see the usage info, type ``lcinvestor --help``::
                             A JSON file with the investment settings you want to
                             use.
       -q, --quiet           Don't show a confirmation prompt with your investment
+      --no_auto_execute     Process not execute order and will require manual order completion
                             settings. Must be used with --config.
       --version             Print the lcinvestor version number
       --run-once            Try to invest and then end the program. (Best used

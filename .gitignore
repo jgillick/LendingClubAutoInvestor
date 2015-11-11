@@ -2,3 +2,4 @@
 .investortest
 daemon.log
 *.pyc
+build

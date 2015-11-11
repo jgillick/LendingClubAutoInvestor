@@ -101,6 +101,7 @@ if __name__ == '__main__':
     parser.add_argument('--version', action='store_true', default=False, help='Print the lcinvestor version number')
     parser.add_argument('--run-once', action='store_true', dest='run_once', default=False, help='Try to invest and then end the program. (Best used with --config, --email, --pass and --quiet flags)')
     parser.add_argument('-v', '--verbose', action='store_true', dest='verbose', default=False, help='Verbose output')
+    parser.add_argument('--no_auto_execute', action='store_true', dest='no_auto_execute', default=False, help='Process not execute order and will require manual order completion')
 
     if hasDaemonRunner:
         parser.add_argument('start/stop/status', action='store', type=str, nargs='*', help='Start or stop the this as a background task (daemon). Use status to see the current daemon status')
@@ -114,6 +115,7 @@ if __name__ == '__main__':
     options.action = options.__dict__['start/stop/status'] if hasDaemonRunner else []
     action = options.action[0] if (len(options.action) > 0) else None
     isVerbose = options.verbose
+    isAutoExecute = not options.no_auto_execute
     isDaemon = (action is not None)
     isStarting = ('start' == action)
     isStopping = ('stop' == action)
@@ -134,7 +136,7 @@ if __name__ == '__main__':
 
     # Start program
     try:
-        investor = lcinvestor.AutoInvestor(verbose=isVerbose)
+        investor = lcinvestor.AutoInvestor(verbose=isVerbose, auto_execute=isAutoExecute)
 
         # Print version number
         if options.version:
