@@ -300,7 +300,7 @@ class AutoInvestor:
                         self.logger.warning('No investment portfolios matched your filters at this time -- Trying again in {2} minutes'.format(self.settings['min_percent'], self.settings['max_percent'], self.settings['frequency']))
 
                 except Exception as e:
-                    self.logger.error('Failed trying to invest: {0}'.format(str(e)))
+                    self.logger.exception('Failed trying to invest: {0}'.format(str(e)))
 
             else:
                 self.logger.info('Only ${0} available for investing (of your ${1} balance)'.format(cash, self.lc.get_cash_balance()))
